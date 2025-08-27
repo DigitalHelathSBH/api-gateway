@@ -69,15 +69,24 @@ docker logs -f api-getaway
 ssh user@server
 cd /opt/api-getaway
 git pull
-docker compose up -d --build
 ~~~
 
-2) Build + Restart  
+2) เซ็ตค่า `.env` (ทำบนเซิร์ฟเวอร์เท่านั้น)  
+~~~env
+PORT=3002
+SQLSERVER_HOST=10.0.1.1
+SQLSERVER_PORT=1433
+SQLSERVER_USER=ssbsql
+SQLSERVER_PASS=StrongPassword
+SQLSERVER_DB=SSBDatabase
+~~~
+
+3) Build + Restart  
 ~~~bash
 docker compose up -d --build
 ~~~
 
-3) ตรวจสอบ  
+4) ตรวจสอบ  
 ~~~bash
 docker ps
 curl http://127.0.0.1:3002/ping
