@@ -17,7 +17,8 @@ export const getTokenTest = async () => {
 };
 
 export const sendToOut = async (payload, token) => {
-  const res = await fetch('http://10.0.120.17/api/out/', {
+  //const res = await fetch('http://10.0.120.17:3002/vital/out/', { 
+  const res = await fetch('http://10.0.1.154/vital/out/', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -31,11 +32,11 @@ export const sendToOut = async (payload, token) => {
   try {
     const json = JSON.parse(text);
     if (!res.ok || json.status_code === '402') {
-      return { status_code: '402', statusDesc: 'Invalid Token or failed to send data', Payload: {} };
+      return { status_code: '402', statusDesc: `Invalid Token or failed to send data(${text})`, Payload: {} };
     }
     return json;
   } catch {
-    return { status_code: '500', statusDesc: 'Invalid JSON response from target', Payload: {} };
+    return { status_code: '500', statusDesc: 'Invalid JSON response from target(For sendToOut:May Be Out Port Error)', Payload: {} };
   }
 };
 

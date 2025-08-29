@@ -1,6 +1,11 @@
-//import { isValidDateString} from '../common/utils.js';
 import { getVitalsPayload } from './services.js';
-import { isValidDateString, getToken, getTokenTest, sendToOut} from './external.js';
+import { isValidDateString, getTokenTest, sendToOut } from './external.js';
+import { vitalRequestSchema } from './schema.js';
+
+export const handleVitalRequestOpts = {
+  schema: vitalRequestSchema,
+  handler: handleVitalRequest
+};
 
 export async function handleVitalRequest(request, reply) {
   const response = {
@@ -9,42 +14,83 @@ export async function handleVitalRequest(request, reply) {
     Payload: {}
   };
 
-  const { startDate, endDate } = request.body || {};
+  const body = request.body || {};
+  const { startDate, endDate } = body;
+
+  // 🔒 Fallback: ตรวจสอบว่าไม่มี key เกินจาก startDate, endDate
+  const allowedKeys = ['startDate', 'endDate'];
+  const invalidKeys = Object.keys(body).filter(k => !allowedKeys.includes(k));
+  if (invalidKeys.length > 0) {
+    reply.status(400).send({
+      ...response,
+      status_code: '400',
+      statusDesc: `Invalid Fields: ${invalidKeys.join(', ')}`,
+      Payload: {}
+    });
+    return;
+  }
 
   if (!isValidDateString(startDate) || !isValidDateString(endDate)) {
-    reply.status(400).send({ ...response, status_code: '400', statusDesc: 'Invalid Date Format' });
+    reply.status(400).send({
+      ...response,
+      status_code: '400',
+      statusDesc: 'Invalid Date Format',
+      Payload: {}
+    });
     return;
   }
 
   if (new Date(startDate) > new Date(endDate)) {
-    reply.status(400).send({ ...response, status_code: '401', statusDesc: 'Invalid Date Range' });
+    reply.status(400).send({
+      ...response,
+      status_code: '401',
+      statusDesc: 'Invalid Date Range',
+      Payload: {}
+    });
     return;
   }
 
   try {
     const payload = await getVitalsPayload(startDate, endDate);
     if (!payload.length) {
-      reply.status(404).send({ ...response, status_code: '404', statusDesc: 'Not Found Data' });
+      reply.status(404).send({
+        ...response,
+        status_code: '404',
+        statusDesc: 'Not Found Data',
+        Payload: {}
+      });
       return;
     }
 
-    //const tokenRec = await getToken();
     const tokenRec = await getTokenTest();
     if (!tokenRec.token) {
-      reply.status(403).send({ ...response, status_code: '403', statusDesc: 'Invalid Token!' });
+      reply.status(403).send({
+        ...response,
+        status_code: '403',
+        statusDesc: 'Invalid Token!',
+        Payload: {}
+      });
       return;
     }
 
     const outResponse = await sendToOut(payload, tokenRec.token);
     response.status_code = outResponse.status_code;
     response.statusDesc = outResponse.statusDesc;
-    response.Payload = payload;
+
+    if (response.status_code !== '200') {
+      response.Payload = payload;
+    }
 
     reply.status(200).send(response);
   } catch (err) {
     console.error('Vital Error:', err.message);
     const code = ['ETIMEOUT', 'ECONNREFUSED'].includes(err.code) ? '503' : '500';
     const desc = code === '503' ? 'Database Unavailable' : 'Server Error...';
-    reply.status(Number(code)).send({ ...response, status_code: code, statusDesc: desc });
+    reply.status(Number(code)).send({
+      ...response,
+      status_code: code,
+      statusDesc: desc,
+      Payload: {}
+    });
   }
 }
