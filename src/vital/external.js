@@ -10,14 +10,10 @@ export const getToken = async () => {
 };
 
 export const getTokenTest = async () => {
-  const jsn = {
-    token: 'tesssssstTOKENexl1234645646466646466'
-  };
-  return jsn;
+  return { token: 'tesssssstTOKENexl1234645646466646466' };
 };
 
 export const sendToOut = async (payload, token) => {
-  //const res = await fetch('http://10.0.120.17:3002/vital/out/', { 
   const res = await fetch('http://10.0.1.154/vital/out/', {
     method: 'POST',
     headers: {
@@ -43,7 +39,6 @@ export const sendToOut = async (payload, token) => {
 export function isValidDateString(dateStr) {
   const regex = /^\d{4}-\d{2}-\d{2}$/;
   if (!regex.test(dateStr)) return false;
-
   const date = new Date(dateStr);
   return !isNaN(date.getTime());
 }

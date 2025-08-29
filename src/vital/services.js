@@ -7,20 +7,19 @@ export const getVitalsPayload = async (startDate, endDate) => {
     const result = await pool.request()
       .input('startDate', sql.Date, startDate)
       .input('endDate', sql.Date, endDate)
-      .query(`
-        SELECT TOP 50 saintmed.*,
-          (
-            SELECT TOP 1 VNMST_SUBQRY.hn
-            FROM SSBDatabase.dbo.VNMST VNMST_SUBQRY
-            WHERE VNMST_SUBQRY.vn = saintmed.vn
-            ORDER BY VNMST_SUBQRY.VISITDATE DESC
-          ) AS [hn]
-        FROM SSBDatabase.dbo.saintmed
-        WHERE CONVERT(DATE, LEFT(datetime, 8)) BETWEEN @startDate AND @endDate
-        ORDER BY datetime DESC;
-      `);
+      .query(
+`SELECT TOP 50 saintmed.*,
+  (
+    SELECT TOP 1 VNMST_SUBQRY.hn
+    FROM SSBDatabase.dbo.VNMST VNMST_SUBQRY
+    WHERE VNMST_SUBQRY.vn = saintmed.vn
+    ORDER BY VNMST_SUBQRY.VISITDATE DESC
+  ) AS [hn]
+FROM SSBDatabase.dbo.saintmed
+WHERE CONVERT(DATE, LEFT(datetime, 8)) BETWEEN @startDate AND @endDate
+ORDER BY datetime DESC;`);
 
-    if (!result.recordset || result.recordset.length === 0) {
+    if (!result.recordset?.length) {
       console.warn('⚠️ No vitals data found for given date range.');
       return [];
     }
@@ -43,38 +42,6 @@ export const getVitalsPayload = async (startDate, endDate) => {
     }));
   } catch (err) {
     console.error('❌ getVitalsPayload error:', err.message);
-    throw err; 
+    throw err;
   }
 };
-
-function calculateAgeTextThaiYMD(birthDateInput) {
-  const birthDate = typeof birthDateInput === 'string' ? new Date(birthDateInput) : birthDateInput;
-
-  if (!(birthDate instanceof Date) || isNaN(birthDate)) {
-    console.warn('⚠️ Invalid birthDate:', birthDateInput);
-    return 'วันเกิดไม่ถูกต้อง';
-  }
-
-  const now = new Date();
-  let years = now.getFullYear() - birthDate.getFullYear();
-  let months = now.getMonth() - birthDate.getMonth();
-  let days = now.getDate() - birthDate.getDate();
-
-  if (months < 0) {
-    years--;
-    months += 12;
-  }
-
-  if (days < 0) {
-    months--;
-    const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-    days += prevMonth.getDate();
-    if (months < 0) {
-      years--;
-      months += 12;
-    }
-  }
-
-  return `${years} ปี ${months} เดือน ${days} วัน`;
-}
-

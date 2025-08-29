@@ -1,23 +1,17 @@
 import { getVitalsPayload } from './services.js';
 import { isValidDateString, getTokenTest, sendToOut } from './external.js';
-import { vitalRequestSchema } from './schema.js';
 
-export const handleVitalRequestOpts = {
-  schema: vitalRequestSchema,
-  handler: handleVitalRequest
-};
-
-export async function handleVitalRequest(request, reply) {
+export async function handleVitalRequestDate(request, reply) {
   const response = {
     status_code: '200',
     statusDesc: 'Success.',
-    Payload: {}
+    Payload: []
   };
 
   const body = request.body || {};
   const { startDate, endDate } = body;
 
-  // 🔒 Fallback: ตรวจสอบว่าไม่มี key เกินจาก startDate, endDate
+  // 🔒 ตรวจสอบว่าไม่มี key เกินจากที่ schema กำหนด
   const allowedKeys = ['startDate', 'endDate'];
   const invalidKeys = Object.keys(body).filter(k => !allowedKeys.includes(k));
   if (invalidKeys.length > 0) {
@@ -25,7 +19,7 @@ export async function handleVitalRequest(request, reply) {
       ...response,
       status_code: '400',
       statusDesc: `Invalid Fields: ${invalidKeys.join(', ')}`,
-      Payload: {}
+      Payload: []
     });
     return;
   }
@@ -35,7 +29,7 @@ export async function handleVitalRequest(request, reply) {
       ...response,
       status_code: '400',
       statusDesc: 'Invalid Date Format',
-      Payload: {}
+      Payload: []
     });
     return;
   }
@@ -45,7 +39,7 @@ export async function handleVitalRequest(request, reply) {
       ...response,
       status_code: '401',
       statusDesc: 'Invalid Date Range',
-      Payload: {}
+      Payload: []
     });
     return;
   }
@@ -57,7 +51,7 @@ export async function handleVitalRequest(request, reply) {
         ...response,
         status_code: '404',
         statusDesc: 'Not Found Data',
-        Payload: {}
+        Payload: []
       });
       return;
     }
@@ -68,7 +62,7 @@ export async function handleVitalRequest(request, reply) {
         ...response,
         status_code: '403',
         statusDesc: 'Invalid Token!',
-        Payload: {}
+        Payload: []
       });
       return;
     }
@@ -77,9 +71,7 @@ export async function handleVitalRequest(request, reply) {
     response.status_code = outResponse.status_code;
     response.statusDesc = outResponse.statusDesc;
 
-    if (response.status_code !== '200') {
-      response.Payload = payload;
-    }
+    response.Payload = response.status_code === '200' ? [] : payload;
 
     reply.status(200).send(response);
   } catch (err) {
@@ -90,7 +82,7 @@ export async function handleVitalRequest(request, reply) {
       ...response,
       status_code: code,
       statusDesc: desc,
-      Payload: {}
+      Payload: []
     });
   }
 }
