@@ -1,7 +1,7 @@
-import { handleVitalRequestDate } from './controller.js';
-import { vitalRequestSchema as vitalSchema } from './schema.js';
+import { handleVitalRequestDate, handleVitalRequestDateHn } from './controller.js';
+import { vitalRequestDateSchema, vitalRequestDateHnSchema } from './schema.js';
 
 export default async function vitalRoutes(fastify, opts) {
-  fastify.post('/vital', { schema: vitalSchema }, handleVitalRequestDate);
-  //fastify.post('/vital', { schema: vitalSchema }, handleVitalRequestDateHn);
+  fastify.post('/vital/bydate', { schema: vitalRequestDateSchema }, handleVitalRequestDate);
+  fastify.post('/vital/byhn', { schema: vitalRequestDateHnSchema }, handleVitalRequestDateHn);
 }
