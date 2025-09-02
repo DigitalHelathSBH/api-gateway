@@ -40,5 +40,5 @@ export function startVitalTimer() {
     } catch (err) {
       console.error(`❌ Vital timer error at ${timestamp}:`, err.message);
     }
-  }, 1 * 60 * 1000); // ทุก 10 นาที
+  }, 10 * 60 * 1000); // ทุก 10 นาที
 }
