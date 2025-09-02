@@ -32,7 +32,7 @@ export function startVitalTimer() {
       const outResponse = stripHtmlTags(outResponseRaw);
       //console.log(`📨 vitalTimer.js.outResponse [${outResponse.status_code}] , ${outResponse.statusDesc}:\n\n`);
       if (String(outResponse.status_code) === '201') {
-        await updateStatusvitalBatch(payload);
+        await updateStatusvitalBatch(payloadFull);
         console.log(`✅ Auto update complete at ${timestamp}`);
       } else {
         console.warn(`⚠️ Send failed: ${outResponse.status_code} - ${outResponse.statusDesc}`);
