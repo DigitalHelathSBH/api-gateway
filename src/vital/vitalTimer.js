@@ -1,4 +1,5 @@
-import { getVitalsPayload, getTokenTest, sendToOut } from './external.js';
+import { getTokenTest,sendToOut,stripHtmlTags} from './external.js';
+import { getVitalsPayload } from './services.js';
 import { updateStatusvitalBatch } from './updater.js';
 
 export function startVitalTimer() {
@@ -7,24 +8,34 @@ export function startVitalTimer() {
     console.log(`⏱ Vital timer triggered at ${timestamp}`);
 
     try {
-      // ส่งวันที่วันนี้เป็น start/end
-      const today = new Date().toISOString().slice(0, 10);
-      const payload = await getVitalsPayload(today, today);
+      const date = new Date();
+      const today =
+        date.getFullYear() +
+        '-' +
+        String(date.getMonth() + 1).padStart(2, '0') +
+        '-' +
+        String(date.getDate()).padStart(2, '0');
 
-      if (!Array.isArray(payload) || payload.length === 0) {
+      const payloadFull = await getVitalsPayload(today, today);
+
+      if (!Array.isArray(payloadFull) || payloadFull.length === 0) {
         console.log('📭 No new data to send');
         return;
       }
 
-      const tokenRec = await getTokenTest(); // หรือ getToken() สำหรับ production
-      const outResponse = await sendToOut(payload, tokenRec.token);
+      const payload = payloadFull[0];
+      //console.log('📦 vitalTimer.js \n', JSON.stringify(payload, null, 2));
 
+      const tokenRec = await getTokenTest(); // หรือ getToken() สำหรับ production
+
+      let outResponseRaw = await sendToOut(payload, tokenRec.token);
+      const outResponse = stripHtmlTags(outResponseRaw);
+      //console.log(`📨 vitalTimer.js.outResponse [${outResponse.status_code}] , ${outResponse.statusDesc}:\n\n`);
       if (String(outResponse.status_code) === '201') {
         await updateStatusvitalBatch(payload);
         console.log(`✅ Auto update complete at ${timestamp}`);
       } else {
         console.warn(`⚠️ Send failed: ${outResponse.status_code} - ${outResponse.statusDesc}`);
-        // คุณสามารถเพิ่ม retry logic ตรงนี้ได้ในอนาคต
       }
     } catch (err) {
       console.error(`❌ Vital timer error at ${timestamp}:`, err.message);

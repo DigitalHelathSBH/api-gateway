@@ -1,4 +1,3 @@
-
 export const getToken = async () => {
   const res = await fetch('http://localhost:3000/api/getToken', {
     method: 'POST',
@@ -19,18 +18,22 @@ export const sendToOut = async (payload, token) => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'vital': '01',
       Authorization: `Bearer ${token}`
     },
     body: JSON.stringify(payload)
   });
 
-  const text = await res.text();
+  let rawText = await res.text();
+  const cleanedText = stripHtmlTags(rawText);
+  console.log('external.Response Text:', JSON.stringify(cleanedText));
   try {
-    const json = JSON.parse(text);
+    const json = JSON.parse(cleanedText);
     if (!res.ok || json.status_code === '402') {
-      return { status_code: '402', statusDesc: `Invalid Token or failed to send data(${text})`, Payload: {} };
+      return { status_code: '402', statusDesc: `Invalid Token or failed to send data(${cleanedText})`, Payload: {} };
     }
+    if (String(json.status_code) === '201') {
+      return { status_code: '201', statusDesc: `Success`, Payload: {} };
+    } 
     return json;
   } catch {
     return { status_code: '500', statusDesc: 'Invalid JSON response from target(For sendToOut:May Be Out Port Error)', Payload: {} };
@@ -44,31 +47,7 @@ export function isValidDateString(dateStr) {
   return !isNaN(date.getTime());
 }
 
-export async function getVitalsPayload() {
-  const today = new Date().toISOString().slice(0, 10);
-
-  const payload = {
-    startDate: today,
-    endDate: today
-  };
-
-  //const port = process.env.PORT || 3002;
-  //await app.listen({ port, host: '0.0.0.0' });
-  const res = await fetch(`http://localhost:3002/vital/bydate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-
-  const text = await res.text();
-
-  if (!res.ok) {
-    throw new Error(`Failed to fetch vitals: ${res.status} - ${text}`);
-  }
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    throw new Error(`Invalid JSON response: ${text}`);
-  }
+export function stripHtmlTags(str) {
+  return typeof str === 'string' ? str.replace(/<[^>]*>/g, '') : str;
 }
+

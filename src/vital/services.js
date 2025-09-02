@@ -8,16 +8,14 @@ export const getVitalsPayload = async (startDate, endDate) => {
       .input('startDate', sql.Date, startDate)
       .input('endDate', sql.Date, endDate)
       .query(
-`SELECT TOP 10 ip,vn,datetime,weight,height
-,bmi,temperature,systolic,diastolic,pulse
-,updatedate,spo2,suffix,status,isnull(statusvital,'0') as statusvital,
-  (
-    SELECT TOP 1 VNMST_SUBQRY.hn
-    FROM SSBDatabase.dbo.VNMST VNMST_SUBQRY
-    WHERE VNMST_SUBQRY.vn = saintmed.vn
-    ORDER BY VNMST_SUBQRY.VISITDATE DESC
-  ) AS [hn]
+`SELECT TOP 10 saintmed.ip,saintmed.vn,saintmed.datetime,saintmed.weight,saintmed.height
+  ,saintmed.bmi,saintmed.temperature,saintmed.systolic,saintmed.diastolic,saintmed.pulse
+  ,saintmed.updatedate,saintmed.spo2,saintmed.suffix,status,isnull(saintmed.statusvital,'0') as statusvital
+  ,VNMST.hn AS [hn]
 FROM SSBDatabase.dbo.saintmed
+INNER JOIN SSBDatabase.dbo.VNMST
+  ON VNMST.vn = saintmed.vn
+  AND CONVERT(DATE, VNMST.VISITDATE) = CONVERT(DATE, LEFT(saintmed.datetime, 8))
 WHERE (statusvital is null OR statusvital = '' OR statusvital = '0') 
 AND CONVERT(DATE, LEFT(datetime, 8)) BETWEEN @startDate AND @endDate
 ORDER BY datetime DESC;
@@ -33,7 +31,8 @@ ORDER BY datetime DESC;
       vn: med.vn, 
       datetime: med.datetime,
       ip: med.ip,
-      macAddress: med.macAddress ?? null,
+      macAddress: med.ip ?? null,
+      deviceId : null,
    results: [
         { name: 'WEIGHT', value: med.weight ?? null, valueType: 'float', unit: 'kg' },
         { name: 'HEIGHT', value: med.height ?? null, valueType: 'float', unit: 'cm' },
@@ -45,56 +44,9 @@ ORDER BY datetime DESC;
         { name: 'SPO2', value: med.spo2 ?? null, valueType: 'integer', unit: '%' },
       ]
     }));
+
   } catch (err) {
     console.error('❌ getVitalsPayload error:', err.message);
-    throw err;
-  }
-};
-
-export const getVitalsPayloadByHn = async (startDate, endDate, hn) => {
-  try {
-    const pool = await getPool();
-    const result = await pool.request()
-      .input('startDate', sql.Date, startDate)
-      .input('endDate', sql.Date, endDate)
-      .input('hn', sql.VarChar, hn)
-      .query(`
-        SELECT saintmed.*
-        FROM SSBDatabase.dbo.saintmed
-        WHERE (statusvital is null OR statusvital = '' OR statusvital = '0') 
-        AND  CONVERT(DATE, LEFT(datetime, 8)) BETWEEN @startDate AND @endDate
-          AND EXISTS (
-            SELECT 1 FROM SSBDatabase.dbo.VNMST
-            WHERE VNMST.vn = saintmed.vn AND VNMST.hn = @hn
-          )
-        ORDER BY datetime DESC;
-        --5021956
-      `);
-
-    if (!result.recordset?.length) {
-      console.warn(`⚠️ No vitals data found for HN: ${hn} in given date range.`);
-      return [];
-    }
-
-    return result.recordset.map(med => ({
-      hn,
-      vn: med.vn, 
-      datetime: med.datetime,
-      ip: med.ip,
-      macAddress: med.macAddress ?? null,
-      results: [
-        { name: 'WEIGHT', value: med.weight ?? null, valueType: 'float', unit: 'kg' },
-        { name: 'HEIGHT', value: med.height ?? null, valueType: 'float', unit: 'cm' },
-        { name: 'BMI', value: med.bmi ?? null, valueType: 'float', unit: '' },
-        { name: 'TEMPERATURE', value: med.temperature ?? null, valueType: 'float', unit: '°C' },
-        { name: 'SYSTOLIC', value: med.systolic ?? null, valueType: 'integer', unit: 'mmHg' },
-        { name: 'DIASTOLIC', value: med.diastolic ?? null, valueType: 'integer', unit: 'mmHg' },
-        { name: 'PULSE', value: med.pulse ?? null, valueType: 'integer', unit: 'bpm' },
-        { name: 'SPO2', value: med.spo2 ?? null, valueType: 'integer', unit: '%' },
-      ]
-    }));
-  } catch (err) {
-    console.error(`❌ getVitalsPayloadByHn error for HN ${hn}:`, err.message);
     throw err;
   }
 };
