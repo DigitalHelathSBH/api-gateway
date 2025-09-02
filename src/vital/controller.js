@@ -1,5 +1,6 @@
-import { getVitalsPayload, getVitalsPayloadByHn } from './services.js';
+import { getVitalsPayload, getVitalsPayloadByHn ,updateStatusvitalBatch  } from './services.js';
 import { isValidDateString, getTokenTest, sendToOut } from './external.js';
+import { getPool } from '../common/db.js';
 
 function validateRequestKeys(body, allowedKeys) {
   const invalidKeys = Object.keys(body).filter(k => !allowedKeys.includes(k));
@@ -44,8 +45,14 @@ export async function handleVitalRequestDate(request, reply) {
       reply.status(403).send({ ...response, status_code: '403', statusDesc: 'Invalid Token!' });
       return;
     }
-
+    //console.log(payload);
     const outResponse = await sendToOut(payload, tokenRec.token);
+    if (String(outResponse.status_code) === '201') {
+      await updateStatusvitalBatch(payload);
+      const pool = await getPool(); // ✅ ต้องมี
+
+    }
+
     response.status_code = outResponse.status_code;
     response.statusDesc = outResponse.statusDesc;
     //response.Payload = response.status_code === '201' ? [] : payload;

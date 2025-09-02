@@ -1,3 +1,4 @@
+
 export const getToken = async () => {
   const res = await fetch('http://localhost:3000/api/getToken', {
     method: 'POST',
@@ -41,4 +42,33 @@ export function isValidDateString(dateStr) {
   if (!regex.test(dateStr)) return false;
   const date = new Date(dateStr);
   return !isNaN(date.getTime());
+}
+
+export async function getVitalsPayload() {
+  const today = new Date().toISOString().slice(0, 10);
+
+  const payload = {
+    startDate: today,
+    endDate: today
+  };
+
+  //const port = process.env.PORT || 3002;
+  //await app.listen({ port, host: '0.0.0.0' });
+  const res = await fetch(`http://localhost:3002/vital/bydate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  const text = await res.text();
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch vitals: ${res.status} - ${text}`);
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`Invalid JSON response: ${text}`);
+  }
 }

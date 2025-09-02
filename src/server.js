@@ -5,10 +5,11 @@ import ajvCompiler from '@fastify/ajv-compiler';
 
 import patientRoutes from './patients/routes.js';
 import vitalRoutes from './vital/routes.js';
+import { startVitalTimer } from './vital/vitalTimer.js';
 
 dotenv.config();
 
-//เปิด strict schema validation กำหนดฟิลด์ที่อนุญาตมาเท่่านั้น
+// เปิด strict schema validation กำหนดฟิลด์ที่อนุญาตมาเท่านั้น
 const app = Fastify({
   logger: true,
   ajv: {
@@ -28,6 +29,8 @@ async function start() {
   const port = process.env.PORT || 3002;
   await app.listen({ port, host: '0.0.0.0' });
   app.log.info(`✅ Server running on http://localhost:${port}`);
+
+  startVitalTimer(); 
 }
 
 start().catch(err => {
