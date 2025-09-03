@@ -1,42 +1,24 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import dotenv from 'dotenv';
+import ajvCompiler from '@fastify/ajv-compiler';
 
-import patientRoutes from './hie/routes.js';
-import sbhoncloudRoutes from './sbhoncloud/controller.js';
-
-import vitalRoutes from './vital/routes.js';
-import { startVitalTimer } from './vital/vitalTimer.js';
+import patientRoutes from './patients/routes.js';
 
 dotenv.config();
 
-const app = Fastify({
-  logger: true,
-  ajv: {
-    customOptions: {
-      strict: true,
-      removeAdditional: false
-    }
-  }
-});
+const app = Fastify({ logger: true });
 
 async function start() {
   await app.register(cors, { origin: '*' });
 
-  app.register(patientRoutes, { prefix: '/patients' });
-
-  app.register(sbhoncloudRoutes, { prefix: '/sbhoncloud' });
-
-  app.register(vitalRoutes, { prefix: '/vitalsing' });
-
+  app.register(patientRoutes);
 
   const port = process.env.PORT || 3002;
   await app.listen({ port, host: '0.0.0.0' });
   app.log.info(`✅ Server running on http://localhost:${port}`);
-
-  
-  //startVitalTimer(); 
 }
+
 start().catch(err => {
   app.log.error(err);
   process.exit(1);
