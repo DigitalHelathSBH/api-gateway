@@ -1,16 +1,16 @@
-export const getToken = async () => {
-  const res = await fetch('http://localhost:3000/api/getToken', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ client_id: 'client_id----', client_secret: 'client_secret---' })
-  });
+export const getTokenPrepare = async (caseGet) => {
+  if (caseGet === '1') {
+    const res = await fetch('http://localhost:3000/api/getToken', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_id: 'client_id----', client_secret: 'client_secret---' })
+    });
 
-  if (!res.ok) throw new Error('Token fetch failed');
-  return await res.json();
-};
-
-export const getTokenTest = async () => {
-  return { token: 'tesssssstTOKENexl1234645646466646466' };
+    if (!res.ok) throw new Error('Token fetch failed');
+    return await res.json();
+  }else{
+    return { token: 'tesssssstTOKENexl1234645646466646466' };
+  }
 };
 
 export const sendToOut = async (payload, token) => {
@@ -20,7 +20,7 @@ export const sendToOut = async (payload, token) => {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`
     },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload) //เข้ารหัสเป็น JSON
   });
 
   let rawText = await res.text();
@@ -48,6 +48,10 @@ export function isValidDateString(dateStr) {
 }
 
 export function stripHtmlTags(str) {
-  return typeof str === 'string' ? str.replace(/<[^>]*>/g, '') : str;
+  if (typeof str !== 'string') return str;
+  // ล้าง HTML tag
+  const cleaned = str.replace(/<[^>]*>/g, '');
+  // ดึงเฉพาะ JSON object จากข้อความที่ปะปน
+  const match = cleaned.match(/{.*}/s); // ใช้ regex ดึง {...} ตัวแรก
+  return match ? match[0] : cleaned; // ถ้าเจอ JSON ให้คืน JSON string, ถ้าไม่เจอคืนข้อความที่ล้างแล้ว
 }
-

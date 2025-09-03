@@ -1,8 +1,9 @@
-import { getTokenTest,sendToOut,stripHtmlTags} from './external.js';
+import { getTokenPrepare,sendToOut,stripHtmlTags} from './external.js';
 import { getVitalsPayload } from './services.js';
 import { updateStatusvitalBatch } from './updater.js';
 
 export function startVitalTimer() {
+  //return;
   setInterval(async () => {
     const timestamp = new Date().toISOString();
     console.log(`⏱ Vital timer triggered at ${timestamp}`);
@@ -23,10 +24,10 @@ export function startVitalTimer() {
         return;
       }
 
-      const payload = payloadFull[0];
+      const payload = payloadFull[0]; /* ตัดตัวArrayนอกสุุดออกเพื่อให้ได้ตามspec */
       //console.log('📦 vitalTimer.js \n', JSON.stringify(payload, null, 2));
 
-      const tokenRec = await getTokenTest(); // หรือ getToken() สำหรับ production
+      const tokenRec = await getTokenPrepare('0'); // หรือ getTokenPrepare() สำหรับ production
 
       let outResponseRaw = await sendToOut(payload, tokenRec.token);
       const outResponse = stripHtmlTags(outResponseRaw);

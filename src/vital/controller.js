@@ -1,5 +1,5 @@
 import { getVitalsPayload ,updateStatusvitalBatch  } from './services.js';
-import { isValidDateString, getTokenTest, sendToOut } from './external.js';
+import { isValidDateString, getTokenPrepare, sendToOut ,stripHtmlTags} from './external.js';
 import { getPool } from '../common/db.js';
 
 function validateRequestKeys(body, allowedKeys) {
@@ -34,23 +34,28 @@ export async function handleVitalRequestDate(request, reply) {
   }
 
   try {
-    const payload = await getVitalsPayload(startDate, endDate); 
-    if (!payload.length) {
+
+    const payloadFull = await getVitalsPayload(startDate, endDate);
+    if (!Array.isArray(payloadFull) || payloadFull.length === 0) {
       reply.status(404).send({ ...response, status_code: '404', statusDesc: 'Not Found Data' });
       return;
-    }
+    }      
 
-    const tokenRec = await getTokenTest();
+    const tokenRec = await getTokenPrepare('0');
     if (!tokenRec.token) {
       reply.status(403).send({ ...response, status_code: '403', statusDesc: 'Invalid Token!' });
       return;
     }
+    const payload = payloadFull[0]; /* ตัดตัวArrayนอกสุุดออกเพื่อให้ได้ตามspec */
     //console.log(payload);
-    const outResponse = await sendToOut(payload, tokenRec.token);
+    let outResponseRaw = await sendToOut(payload, tokenRec.token);
+    const outResponse = stripHtmlTags(outResponseRaw);
     if (String(outResponse.status_code) === '201') {
-      await updateStatusvitalBatch(payload);
-      const pool = await getPool(); // ✅ ต้องมี
-
+      await updateStatusvitalBatch(payloadFull);
+      const pool = await getPool();
+      console.log(`✅ Auto update complete`);
+    }else{
+      console.warn(`⚠️ Send failed: ${outResponse.status_code} - ${outResponse.statusDesc}`);
     }
 
     response.status_code = outResponse.status_code;
