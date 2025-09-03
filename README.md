@@ -1,4 +1,4 @@
-# API Getaway
+# API Gateway
 
 Template สำหรับสร้างและ deploy API Gateway (Fastify + Docker + Kong + Nginx)
 
@@ -6,7 +6,7 @@ Template สำหรับสร้างและ deploy API Gateway (Fastify 
 
 ## 1) 📂 โครงสร้างโปรเจกต์
 ~~~text
-api-getaway/
+api-gateway/
 ├─ src/
 │  ├─ server.js           # main entrypoint
 │  ├─ patients/           # service จริง (patients + visits)
@@ -55,19 +55,19 @@ docker compose up -d
 
 3) ดู log  
 ~~~bash
-docker logs -f api-getaway
+docker logs -f api-gateway
 ~~~
 
 ---
 
 ## 4) 🚀 Deploy ขึ้น Server (จาก GitHub → Linux)
 
-> สมมติโฟลเดอร์โปรเจกต์อยู่ที่ `/opt/api-getaway`
+> สมมติโฟลเดอร์โปรเจกต์อยู่ที่ `/opt/api-gateway`
 
 1) ดึง/อัปเดตโค้ด  
 ~~~bash
 ssh user@server
-cd /opt/api-getaway
+cd /opt/api-gateway
 git pull
 ~~~
 
@@ -98,7 +98,7 @@ curl http://127.0.0.1:3002/ping
 
 - `.env` ห้าม commit ขึ้น repository
 - เปิด firewall ให้เข้าพอร์ต 3002 เฉพาะจาก Kong/Reverse Proxy
-- ถ้าใช้ Kong/Nginx อยู่แล้ว ให้ map path `/api/*` → ไปที่ api-getaway:3002
+- ถ้าใช้ Kong/Nginx อยู่แล้ว ให้ map path `/api/*` → ไปที่ api-gateway:3002
 - ถ้าจัดการ CORS ที่ Kong แล้ว ให้ปิด `@fastify/cors` ในแอปเพื่อลด header ซ้ำ
 
 ---
@@ -148,7 +148,7 @@ curl -X POST http://127.0.0.1:3002/visits \
 
 ~~~bash
 docker compose restart              # รีสตาร์ทแอป
-docker logs -f api-getaway          # ติดตาม log
+docker logs -f api-gateway          # ติดตาม log
 docker compose down                 # หยุดคอนเทนเนอร์
 docker compose up -d --build        # สร้างใหม่และรัน
 ~~~
