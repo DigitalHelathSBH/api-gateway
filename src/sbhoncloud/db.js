@@ -1,47 +1,51 @@
-import 'dotenv/config';
-import sql from 'mssql';
+import { getPool, sql } from '../common/db.js';
 
-const cfg = {
-  server: process.env.DB_SERVER,
-  port: Number(process.env.DB_PORT || 1433),
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_NAME,
-  options: { encrypt: false, trustServerCertificate: true },
-  pool: { max: 10, min: 1, idleTimeoutMillis: 30000 }
-};
+export async function fetchFireList() {
+  const pool = await getPool();
+  const q = `
+    SELECT 
+      Register.EmpID as EMPID,
+      SSBDatabase.dbo.GetSSBName(PYREXT.FIRSTTHAINAME)+' '+SSBDatabase.dbo.GetSSBName(PYREXT.LASTTHAINAME) as USERNAME,
+      REPLACE(section.ThaiName,'(????)','') as SECTIONNAME,
+      Position.PositionName as POSITIONNAME,
+      FIRE.call
+    FROM Saraburi.dbo.FIRE
+    JOIN Saraburi.dbo.Register ON FIRE.EmpID = Register.EmpID
+    LEFT JOIN SSBDatabase.dbo.sectioncode section ON Register.Section = section.Code
+    LEFT JOIN SSBDatabase.dbo.PositionView Position ON Register.nPosition = Position.PositionCode
+    LEFT JOIN SSBDatabase.dbo.PYREXT PYREXT ON PYREXT.PAYROLLNO = FIRE.EmpID
+    WHERE Register.nDate = CONVERT(date, GETDATE())
+      AND nPeriod = (
+        SELECT CASE
+          WHEN CONVERT(time, GETDATE()) BETWEEN '08:30:00' AND '16:30:59' THEN 1
+          WHEN CONVERT(time, GETDATE()) BETWEEN '16:31:00' AND '23:59:59' THEN 2
+          ELSE 3
+        END
+      )
+    ORDER BY PYREXT.FIRSTTHAINAME
+  `;
+  const rs = await pool.request().query(q);
 
-let pool;
-async function getPool() { pool ??= await sql.connect(cfg); return pool; }
-
-export async function fetchPendingMonths(limit = 10) {
-  const p = await getPool();
-  const res = await p.request().input('limit', sql.Int, limit).query(`
-    SELECT TOP (@limit) processing_month
-    FROM dbo.ProcessingMonthQueue WITH (READPAST, ROWLOCK)
-    WHERE status='PENDING'
-    ORDER BY created_at DESC
-  `);
-  return res.recordset.map(r => r.processing_month);
+  const list = rs.recordset.map(r => ({
+    EMPID: r.EMPID,
+    USERNAME: r.USERNAME,
+    SECTIONNAME: r.SECTIONNAME,
+    POSITIONNAME: r.POSITIONNAME,
+    CALL: r.call
+  }));
+  return list;
 }
 
-export async function markMonthSent(month) {
-  const p = await getPool();
-  await p.request().input('m', sql.VarChar(7), month).query(`
-    UPDATE dbo.ProcessingMonthQueue
-    SET status='SENT', updated_at=SYSUTCDATETIME()
-    WHERE processing_month=@m
-  `);
-}
-
-export async function saveResponse(month, httpStatus, jsonStr) {
-  const p = await getPool();
-  await p.request()
-    .input('m', sql.VarChar(7), month)
-    .input('s', sql.Int, httpStatus)
-    .input('j', sql.NVarChar(sql.MAX), jsonStr)
-    .query(`
-      INSERT INTO dbo.SBHoncloudResponses(processing_month, http_status, response_json, created_at)
-      VALUES(@m, @s, @j, SYSUTCDATETIME())
-    `);
+export async function insertApiLog(ip) {
+  const pool = await getPool();
+  // host เดิมใน PHP เขียนค่าคงที่ไว้:
+  const host = 'http://10.0.120.13/covid_api/SBHOnCloudFIRE.php';
+  const q = `
+    INSERT INTO Saraburi.dbo.API_log (IP, Makedate, apiwork, host)
+    VALUES (@ip, GETDATE(), 'FIRE OnCloud', @host)
+  `;
+  await pool.request()
+    .input('ip', sql.VarChar(64), ip || '')
+    .input('host', sql.VarChar(255), host)
+    .query(q);
 }

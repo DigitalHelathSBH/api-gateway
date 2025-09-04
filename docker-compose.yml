@@ -1,7 +1,7 @@
 services:
   api:
     build: .
-    container_name: api-getaway
+    container_name: api-gateway
     env_file:
       - .env
     ports:
