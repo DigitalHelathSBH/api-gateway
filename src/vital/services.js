@@ -8,16 +8,17 @@ export const getVitalsPayload = async (startDate, endDate) => {
       .input('startDate', sql.Date, startDate)
       .input('endDate', sql.Date, endDate)
       .query(
-`SELECT TOP 10 saintmed.ip,saintmed.vn,saintmed.datetime,saintmed.weight,saintmed.height
+`SELECT TOP 30 saintmed.ip,saintmed.vn,saintmed.datetime,saintmed.weight,saintmed.height
   ,saintmed.bmi,saintmed.temperature,saintmed.systolic,saintmed.diastolic,saintmed.pulse
   ,saintmed.updatedate,saintmed.spo2,saintmed.suffix,status,isnull(saintmed.statusvital,'0') as statusvital
+  --,'6803003' AS [hn] --lock for Test Only
   ,VNMST.hn AS [hn]
 FROM SSBDatabase.dbo.saintmed
 INNER JOIN SSBDatabase.dbo.VNMST
   ON VNMST.vn = saintmed.vn
   AND CONVERT(DATE, VNMST.VISITDATE) = CONVERT(DATE, LEFT(saintmed.datetime, 8))
 WHERE (statusvital is null OR statusvital = '' OR statusvital = '0') 
-AND CONVERT(DATE, LEFT(datetime, 8)) BETWEEN @startDate AND @endDate
+  AND CONVERT(DATE, LEFT(datetime, 8)) BETWEEN @startDate AND @endDate
 ORDER BY datetime DESC;
 `);
 
@@ -32,16 +33,16 @@ ORDER BY datetime DESC;
       datetime: med.datetime,
       ip: med.ip,
       macAddress: med.ip ?? null,
-      deviceId : null,
-   results: [
-        { name: 'WEIGHT', value: med.weight ?? null, valueType: 'float', unit: 'kg' },
-        { name: 'HEIGHT', value: med.height ?? null, valueType: 'float', unit: 'cm' },
-        { name: 'BMI', value: med.bmi ?? null, valueType: 'float', unit: '' },
-        { name: 'TEMPERATURE', value: med.temperature ?? null, valueType: 'float', unit: '°C' },
-        { name: 'SYSTOLIC', value: med.systolic ?? null, valueType: 'integer', unit: 'mmHg' },
-        { name: 'DIASTOLIC', value: med.diastolic ?? null, valueType: 'integer', unit: 'mmHg' },
-        { name: 'PULSE', value: med.pulse ?? null, valueType: 'integer', unit: 'bpm' },
-        { name: 'SPO2', value: med.spo2 ?? null, valueType: 'integer', unit: '%' },
+      deviceId : '',
+      results: [
+        { name: 'WEIGHT', value: String(med.weight) ?? '0', valueType: 'float', unit: 'kg' },
+        { name: 'HEIGHT', value: String(med.height) ?? '0', valueType: 'float', unit: 'cm' },
+        //{ name: 'BMI', value: String(med.bmi) ?? '0', valueType: 'float', unit: '' },   //รอให้HLab เปิดใช้จริง
+        { name: 'BODY_TEMPERATURE', value: String(med.temperature) ?? '0', valueType: 'float', unit: '°C' },
+        { name: 'SYSTOLIC', value: String(med.systolic) ?? '0', valueType: 'integer', unit: 'mmHg' },
+        { name: 'DIASTOLIC', value: String(med.diastolic) ?? '0', valueType: 'integer', unit: 'mmHg' },
+        { name: 'PULSE', value: String(med.pulse) ?? '0', valueType: 'integer', unit: 'bpm' },
+        { name: 'O2SAT', value: String(med.spo2) ?? '0', valueType: 'integer', unit: '%' },
       ]
     }));
 

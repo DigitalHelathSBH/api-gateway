@@ -1,42 +1,105 @@
 export const getTokenPrepare = async (caseGet) => {
-  if (caseGet === '1') {
-    const res = await fetch('http://localhost:3000/api/getToken', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ client_id: 'client_id----', client_secret: 'client_secret---' })
+  const caseGetFinal = '1';
+  if (caseGetFinal === '1') {
+    const HLabUrlAuth = 'https://id-cortex.srbrhospital.com/realms/cortex/protocol/openid-connect/token';
+    const HLabClient_id = 'vital-sign-saintmed';
+    const HLabclient_secret = '9qfrCmH6d05vXlvgiijC3Z33zfcklgyK';
+
+    const formBody = new URLSearchParams({
+      client_id: HLabClient_id,
+      client_secret: HLabclient_secret,
+      grant_type: 'client_credentials' //,scope: 'emr-api-write'
+      
     });
 
+    const res = await fetch(HLabUrlAuth, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: formBody.toString()
+    });
+
+    const tokenData = await res.json();
+    //console.log('HLabToken 1 :', tokenData);
+
     if (!res.ok) throw new Error('Token fetch failed');
-    return await res.json();
-  }else{
+    return tokenData;
+  } else {
     return { token: 'tesssssstTOKENexl1234645646466646466' };
   }
 };
 
-export const sendToOut = async (payload, token) => {
-  const res = await fetch('http://10.0.1.154/vital/out/', {
+export const sendToOut = async (payload, tokenObj) => {
+  const HLabUrlCorTex = 'https://cortex.srbrhospital.com/emr-api/patients/vital-signs/from-device';
+
+  console.log('🔐 HLabToken:', tokenObj.access_token);
+  console.log('📦 Payload:', JSON.stringify(payload, null, 2));
+
+  const res = await fetch(HLabUrlCorTex, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`
+      'Accept': 'application/json',
+      Authorization: `${tokenObj.token_type} ${tokenObj.access_token}`
     },
-    body: JSON.stringify(payload) //เข้ารหัสเป็น JSON
+    body: JSON.stringify(payload)
   });
 
-  let rawText = await res.text();
+  const rawText = await res.text();
   const cleanedText = stripHtmlTags(rawText);
-  console.log('external.Response Text:', JSON.stringify(cleanedText));
+  console.log('📨 Response:', cleanedText);
+
+  // ✅ ตรวจสอบ HTTP status ก่อน parse JSON
+  if (res.status === 201) {
+    return {
+      status_code: '201',
+      statusDesc: 'Success',
+      Payload: {}
+    };
+  }
+
+  if (res.status === 403) {
+    console.error('🚫 403 Forbidden:', cleanedText);
+    return {
+      status_code: '403',
+      statusDesc: `Forbidden: ${cleanedText}`,
+      Payload: {}
+    };
+  }
+
   try {
     const json = JSON.parse(cleanedText);
-    if (!res.ok || json.status_code === '402') {
-      return { status_code: '402', statusDesc: `Invalid Token or failed to send data(${cleanedText})`, Payload: {} };
+
+    // ✅ รองรับ statusCode ที่อยู่ใน json หรือ json.res
+    const statusCode = json.statusCode ?? json.res?.statusCode;
+
+    if (String(statusCode) === '402') {
+      return {
+        status_code: '402',
+        statusDesc: `Invalid Token or failed to send data (${cleanedText})`,
+        Payload: {}
+      };
     }
-    if (String(json.status_code) === '201') {
-      return { status_code: '201', statusDesc: `Success`, Payload: {} };
-    } 
-    return json;
-  } catch {
-    return { status_code: '500', statusDesc: 'Invalid JSON response from target(For sendToOut:May Be Out Port Error)', Payload: {} };
+
+    if (String(statusCode) === '201') {
+      return {
+        status_code: '201',
+        statusDesc: 'Success',
+        Payload: {}
+      };
+    }
+
+    return {
+      status_code: String(statusCode ?? res.status),
+      statusDesc: 'Response received but unrecognized status',
+      Payload: json
+    };
+  } catch (err) {
+    console.error('❌ JSON parse error:', err.message);
+    return {
+      status_code: String(res.status),
+      statusDesc: 'Invalid JSON response from target (May be Out Port Error)',
+      Payload: {}
+    };
   }
 };
 
