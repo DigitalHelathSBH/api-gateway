@@ -29,7 +29,7 @@ export function startVitalTimer() {
 
       const tokenRec = await getTokenPrepare('0'); // หรือ getTokenPrepare() สำหรับ production
 
-      let outResponseRaw = await sendToOut(payload, tokenRec.token);
+      let outResponseRaw = await sendToOut(payload, tokenRec);
       const outResponse = stripHtmlTags(outResponseRaw);
       //console.log(`📨 vitalTimer.js.outResponse [${outResponse.status_code}] , ${outResponse.statusDesc}:\n\n`);
       if (String(outResponse.status_code) === '201') {

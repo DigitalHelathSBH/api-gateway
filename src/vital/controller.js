@@ -42,13 +42,13 @@ export async function handleVitalRequestDate(request, reply) {
     }      
 
     const tokenRec = await getTokenPrepare('0');
-    if (!tokenRec.token) {
-      reply.status(403).send({ ...response, status_code: '403', statusDesc: 'Invalid Token!' });
+    if (!tokenRec.access_token) {
+      reply.status(403).send({ ...response, status_code: '403', statusDesc: 'Invalid Token!(Controller)' });
       return;
     }
     const payload = payloadFull[0]; /* ตัดตัวArrayนอกสุุดออกเพื่อให้ได้ตามspec */
     //console.log(payload);
-    let outResponseRaw = await sendToOut(payload, tokenRec.token);
+    let outResponseRaw = await sendToOut(payload, tokenRec);
     const outResponse = stripHtmlTags(outResponseRaw);
     if (String(outResponse.status_code) === '201') {
       await updateStatusvitalBatch(payloadFull);
