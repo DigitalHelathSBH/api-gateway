@@ -10,7 +10,8 @@
     "fastify": "^5.0.0",
     "@fastify/cors": "^10.0.0",
     "dotenv": "^16.0.0",
-    "mssql": "^10.0.0"
+    "mssql": "^10.0.0",
+    "axios": "^1.7.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.0"
