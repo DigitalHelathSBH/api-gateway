@@ -2,7 +2,7 @@
 //const UrlCorTex = 'http://uat-hpd-vhv.one.th/management/api/telemed/appointments'; //Direct
 const mainUrlCorTex = 'https://uat-hpd-vhv.one.th/management/api'; //Direct
 const hospitalKey = 'G3UGXCQ-UGJEWII-UYJPKEA-2543UUI';
-
+ 
 export const sendToOutForNew = async (payload) => {
   const UrlCorTex = mainUrlCorTex + '/telemed-center/register-appointment'; //Direct
 

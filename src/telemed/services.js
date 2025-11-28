@@ -3,7 +3,7 @@ import sql from 'mssql';
 
 export const getTelemedPayload = async (date) => {
   const pool = await getPool();
-
+ 
   const sqlUnified = `
     SELECT DISTINCT TOP 1000
       HNAPPMNT.APPOINTMENTNO AS [appointmentno],
