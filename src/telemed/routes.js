@@ -1,6 +1,6 @@
 import { patientsRequestHnSchema } from './schema.js';
 import { handlePatientsRequest } from './controller.js';
-
+ 
 export { patientsRequestHnSchema };
  
 export default async function TelemedRoutes(fastify, opts) {

@@ -1,6 +1,6 @@
 import { getPool } from '../common/db.js';
 import sql from 'mssql';
- 
+  
 export async function logTelemedTransaction(payload, response) {
   //console.log('payload object:', payload);
   // แสดง payload แบบ JSON string ที่อ่านง่าย

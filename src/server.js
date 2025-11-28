@@ -36,7 +36,7 @@ async function start() {
   await app.listen({ port, host: '0.0.0.0' });
   app.log.info(`✅ Server running on http://localhost:${port}`);
 
-  //startVitalTimer(); 
+   //startVitalTimer(); 
   startTelemedTimer(); 
 }
 

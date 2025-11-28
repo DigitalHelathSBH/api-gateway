@@ -1,7 +1,7 @@
 import { getTokenPrepare, sendToOutForNew, sendToOutForEdit, sendToOutForCancel, stripHtmlTags } from './external.js';
 import { getTelemedPayload } from './services.js';
 import { logTelemedTransaction } from './updater.js';
- 
+  
 export async function startTelemedLoopData() {
   const timestamp = new Date().toISOString();
   console.log(`\n⏱ Start Telemed timer triggered at ${timestamp}\n`);
