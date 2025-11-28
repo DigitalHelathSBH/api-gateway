@@ -1,6 +1,6 @@
 import { getPool } from '../common/db.js';
 import sql from 'mssql';
-  
+
 export async function logTelemedTransaction(payload, response) {
   //console.log('payload object:', payload);
   // แสดง payload แบบ JSON string ที่อ่านง่าย
@@ -37,7 +37,7 @@ export async function logTelemedTransaction(payload, response) {
     last_error: res?.status === 'fail' ? res?.message : null
   };
 
-  console.log(`📝 Logging transaction: ${txid}\n  เตรียมเข้าสู updateTelemedStatusPerRow() \n  payload.logEntry : ${logEntry} \n ${JSON.stringify(payload, null, 2)}`);
+  //console.log(`📝 Logging transaction: ${txid}\n  เตรียมเข้าสู updateTelemedStatusPerRow() \n  payload.logEntry : ${logEntry} \n ${JSON.stringify(payload, null, 2)}`);
   await updateTelemedStatusPerRow(logEntry);
 }
 

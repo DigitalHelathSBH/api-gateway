@@ -1,7 +1,7 @@
 import { getTokenPrepare, sendToOutForNew, sendToOutForEdit, sendToOutForCancel, stripHtmlTags } from './external.js';
 import { getTelemedPayload } from './services.js';
 import { logTelemedTransaction } from './updater.js';
-  
+
 export async function startTelemedLoopData() {
   const timestamp = new Date().toISOString();
   console.log(`\n⏱ Start Telemed timer triggered at ${timestamp}\n`);
@@ -32,7 +32,8 @@ export async function startTelemedLoopData() {
     for (const payload of payloadFull) {
       //console.log('\n📦 telemedTimer.js \n', JSON.stringify(payload, null, 2));
       let confirmStatusTypeNum = payload.confirmstatustype === null ? null : Number(payload.confirmstatustype);
-
+      
+      //confirmStatusTypeNum = 6;  //MOCK
       switch (confirmStatusTypeNum) {
         case 0:
         case null: /* New */ {

@@ -3,9 +3,9 @@ import sql from 'mssql';
 
 export const getTelemedPayload = async (date) => {
   const pool = await getPool();
-  
+
   const sqlUnified = `
-    SELECT DISTINCT TOP 1000
+    SELECT DISTINCT TOP 2
       HNAPPMNT.APPOINTMENTNO AS [appointmentno],
       HNAPPMNT.PROCEDURECODE AS [procedurecode],
       HNAPPMNT.CONFIRMSTATUSTYPE AS [confirmstatustype],
@@ -58,8 +58,8 @@ export const getTelemedPayload = async (date) => {
       --CONVERT(date, HNAPPMNT.MAKEDATETIME) = CONVERT(date, '2025-11-19' ) --Mock 28/11/2025
       AND HNAPPMNT.PROCEDURECODE='T'       
   `;
-  console.log('date param:', date);
-  console.log('📅 getTelemedPayload SQL:', sqlUnified.replace(/\s+/g, ' '));
+  //console.log('date param:', date);
+  //console.log('📅 getTelemedPayload SQL:', sqlUnified.replace(/\s+/g, ' '));
   const result = await pool.request().input('date', sql.Date, date).query(sqlUnified);
   if (!result?.recordset?.length) return [];
 

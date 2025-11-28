@@ -2,7 +2,7 @@
 //const UrlCorTex = 'http://uat-hpd-vhv.one.th/management/api/telemed/appointments'; //Direct
 const mainUrlCorTex = 'https://uat-hpd-vhv.one.th/management/api'; //Direct
 const hospitalKey = 'G3UGXCQ-UGJEWII-UYJPKEA-2543UUI';
-  
+
 export const sendToOutForNew = async (payload) => {
   const UrlCorTex = mainUrlCorTex + '/telemed-center/register-appointment'; //Direct
 
@@ -23,8 +23,8 @@ export const sendToOutForNew = async (payload) => {
     });
 
     const json = await res.json(); // ✅ parse JSON ตรง ๆ
-    console.log('📨 HTTP Status:', res.status);
-    console.log('📨📨📨📨📨📨📨📨📨📨📨📨📨📨 Response JSON:', JSON.stringify(json, null, 2));
+    //console.log('📨 HTTP Status:', res.status);
+    //console.log('📨📨📨📨📨📨📨📨📨📨📨📨📨📨 Response JSON:', JSON.stringify(json, null, 2));
 
     const statusCode = String(json.status_code || json.statusCode || res.status);
 
@@ -70,7 +70,7 @@ export const sendToOutForNew = async (payload) => {
 export const sendToOutForEdit = async (payload) => {
   const transactionid = payload.transactionid; //from HNAPPMNT.transaction_id
 
-  const UrlCorTex = mainUrlCorTex + `/telemed-center/register-appointment/${transactionid}`; //Direct
+  const UrlCorTex = mainUrlCorTex + `/telemed-center/appointment/${transactionid}`; //Direct
   //console.log("\n📦 เริ่มการส่งไป N Point (แก้ไข):");
   //console.log('TelemedUrlCorTex:', UrlCorTex);
   //console.log('🔐 hospitalkey:', hospitalKey);
@@ -88,8 +88,8 @@ export const sendToOutForEdit = async (payload) => {
     });
 
     const json = await res.json();
-    console.log('📨 HTTP Status:', res.status);
-    console.log('📨 Response JSON:', JSON.stringify(json, null, 2));
+    //console.log('📨 HTTP Status:', res.status);
+    //console.log('📨 Response JSON:', JSON.stringify(json, null, 2));
 
     const statusCode = String(json.status_code || json.statusCode || res.status);
 
@@ -136,7 +136,7 @@ export const sendToOutForEdit = async (payload) => {
 export const sendToOutForCancel = async (payload) => {
   const transactionid = payload.transactionid; //from HNAPPMNT.transaction_id
 
-  const UrlCorTex = mainUrlCorTex + `/telemed-center/register-appointment/${transactionid}`; //Direct
+  const UrlCorTex = mainUrlCorTex + `/telemed-center/appointment/${transactionid}`; //Direct
   //console.log("\n📦 เริ่มการส่งไป N Point (Cancel): ยกเลิกการนัด");
   //console.log('TelemedUrlCorTex:', UrlCorTex);
   //console.log('🔐 hospitalkey:', hospitalKey);
@@ -154,8 +154,8 @@ export const sendToOutForCancel = async (payload) => {
     });
 
     const json = await res.json();
-    console.log('📨 HTTP Status:', res.status);
-    console.log('📨 Response JSON:', JSON.stringify(json, null, 2));
+    //console.log('📨 HTTP Status:', res.status);
+    //console.log('📨 Response JSON:', JSON.stringify(json, null, 2));
 
     const statusCode = String(json.status_code || json.statusCode || res.status);
 

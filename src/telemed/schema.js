@@ -5,7 +5,7 @@ export const patientsRequestHnSchema = {
     additionalProperties: false,
     properties: {
       date: { type: 'string' },      
-    }  
+    }
   },
   response: {
     200: {
