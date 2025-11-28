@@ -9,6 +9,7 @@ import sbhoncloudRoutes from './sbhoncloud/controller.js';
 import vitalRoutes from './vital/routes.js';
 import { startVitalTimer } from './vital/vitalTimer.js';
 
+import { startTelemedTimer } from './telemed/telemedTimer.js';
 
 dotenv.config();
 
@@ -35,8 +36,8 @@ async function start() {
   await app.listen({ port, host: '0.0.0.0' });
   app.log.info(`✅ Server running on http://localhost:${port}`);
 
-    //startVitalTimer(); 
-
+  //startVitalTimer(); 
+  startTelemedTimer(); 
 }
 
 start().catch(err => {
