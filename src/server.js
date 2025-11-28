@@ -37,7 +37,7 @@ async function start() {
   app.log.info(`✅ Server running on http://localhost:${port}`);
 
    //startVitalTimer(); 
-  //startTelemedTimer(); 
+  startTelemedTimer(); 
 }
 
 start().catch(err => {
