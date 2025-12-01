@@ -18,3 +18,4 @@ export async function getPool() {
   pool = await sql.connect(config);
   return pool;
 }
+export { sql };
