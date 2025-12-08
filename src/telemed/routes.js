@@ -1,10 +1,17 @@
 import { patientsRequestHnSchema } from './schema.js';
 import { handlePatientsRequest } from './controller.js';
-
-export { patientsRequestHnSchema };
+//import { testTelemedManual } from './telemedTimer.js';
 
 export default async function TelemedRoutes(fastify, opts) {
-  //fastify.post('/POST/telemed/appointment/bydate', { schema: patientsRequestHnSchema }, handlePatientsRequest);
+  // route เดิม
   fastify.post('/telemed/new/appointment', { schema: patientsRequestHnSchema }, handlePatientsRequest);
-  
+
+  // route ใหม่สำหรับ manual test
+ /* 
+  fastify.post('/telemed/test', async (request, reply) => {
+    const { date } = request.body;
+    const result = await testTelemedManual(date);
+    return reply.send(result);
+  });
+  */
 }

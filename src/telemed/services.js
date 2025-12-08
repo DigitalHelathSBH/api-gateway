@@ -1,16 +1,32 @@
 import { getPool } from '../common/db.js';
 import sql from 'mssql';
 
-export const getTelemedPayload = async (date) => {
+export const getTelemedPayload = async (modeType,date) => {
   const pool = await getPool();
+  modeType = modeType.toUpperCase();
+
+  let sql_SubWhere = ` AND CONVERT(date, HNAPPMNT.MAKEDATETIME) = CONVERT(date, @date) AND (HNAPPMNT.TelemedStatus is null OR HNAPPMNT.TelemedStatus = '') 
+                       AND (HNAPPMNT.transaction_id is null OR HNAPPMNT.transaction_id = '')`; //์Default  NEW
+  if(modeType === 'N' || modeType === 'NEW') { //NEW สร้างเอกสารเพื่อส่งไปTelemed ใหม่
+    sql_SubWhere = sql_SubWhere;    
+  }else if(modeType === 'E' || modeType === 'EDIT' ) { //Edit แก้ไขในทุุกกรณ๊ ยังไม่เอาไปใช้
+    sql_SubWhere = " ";
+  }else if(modeType === 'U' || modeType === 'UPDATE') { //Update  ปรับปรุงเฉพาะ VN ที่ห้องบัตรGenให้หลังจากAPI ส่งการนัดหมายแล้ว ระบบจะมองหาข้อมูลที่มี transaction_id แล้วเท่านั้น 3วันก่อนวันนัดหมาย
+    sql_SubWhere = " AND CONVERT(date, DATEADD(DAY, +3, GETDATE())) = CONVERT(date, HNAPPMNT.APPOINTMENTDATETIME) AND (HNAPPMNT.transaction_id is not null )";
+  }else if(modeType === 'C' || modeType === 'CANCEL') { //Cancel ยกเลิกการนัดหมาย ตอนนี้ยังไม่เอาไปใช้
+    sql_SubWhere = ` AND HNAPPMNT.transaction_id = '?' `; //ยังไม่เอาไปใช้
+  }else{
+    sql_SubWhere = sql_SubWhere;
+  }
 
   const sqlUnified = `
-    SELECT DISTINCT TOP 2
+    SELECT DISTINCT TOP 2000
       HNAPPMNT.APPOINTMENTNO AS [appointmentno],
       HNAPPMNT.PROCEDURECODE AS [procedurecode],
       HNAPPMNT.CONFIRMSTATUSTYPE AS [confirmstatustype],
       HNAPPMNT.hn AS [hn],      
       ISNULL(HNAPPMNT.VN,'') AS [vn],
+      ISNULL(VNPRES.VN,'') AS [vn_press],
       HNAPPMNT.transaction_id AS [transaction_id],
       patientinfo.REF AS [patient_cid],
       PYREXT.IDCARD AS [doctor_cid],
@@ -50,17 +66,28 @@ export const getTelemedPayload = async (date) => {
       INNER JOIN SSBDatabase.dbo.PYREXT ON HNAPPMNT.APPOINTMENTWITHDOCTOR = PYREXT.PAYROLLNO
       INNER JOIN SSBDatabase.dbo.ClinicName ON ClinicName.CODE = HNAPPMNT.APPOINTMENTWITHCLINIC
       INNER JOIN SSBDatabase.dbo.PATIENT_ADDRESS ON PATIENT_ADDRESS.HN = HNAPPMNT.HN AND PATIENT_ADDRESS.SUFFIX = '1'
+      LEFT JOIN SSBDatabase.dbo.VNPRES ON VNPRES.APPOINTMENTNO = HNAPPMNT.APPOINTMENTNO
     WHERE
-      CONVERT(date, HNAPPMNT.MAKEDATETIME) = CONVERT(date, @date)
-      --CONVERT(date, HNAPPMNT.APPOINTMENTDATETIME) < CONVERT(date, Getdate())  --Mock
-      --CONVERT(date, HNAPPMNT.MAKEDATETIME) = CONVERT(date, Getdate() - 1) --Mock
-      --AND ClinicName.ClinicName LIKE '%Tele%'
-      --CONVERT(date, HNAPPMNT.MAKEDATETIME) = CONVERT(date, '2025-11-19' ) --Mock 28/11/2025
-      AND HNAPPMNT.PROCEDURECODE='T'       
+        HNAPPMNT.PROCEDURECODE='T'   
+      ${sql_SubWhere}     
   `;
-  //console.log('date param:', date);
-  //console.log('📅 getTelemedPayload SQL:', sqlUnified.replace(/\s+/g, ' '));
-  const result = await pool.request().input('date', sql.Date, date).query(sqlUnified);
+  /*
+    --AND (HNAPPMNT.transaction_id is null OR HNAPPMNT.transaction_id = '') 
+    --AND (HNAPPMNT.TelemedStatus is null OR HNAPPMNT.TelemedStatus = '') AND (HNAPPMNT.transaction_id is null OR HNAPPMNT.transaction_id = '')
+    --AND CONVERT(date, HNAPPMNT.MAKEDATETIME) = CONVERT(date, @date)
+    --AND CONVERT(date, HNAPPMNT.APPOINTMENTDATETIME) < CONVERT(date, Getdate())  --Mock
+    --AND CONVERT(date, HNAPPMNT.MAKEDATETIME) = CONVERT(date, Getdate() - 1) --Mock
+    --AND ClinicName.ClinicName LIKE '%Tele%'
+    --AND CONVERT(date, HNAPPMNT.MAKEDATETIME) = CONVERT(date, '2025-12-04' ) --Mock 28/11/2025               
+  */
+  console.log('date param:', date);
+  console.log('📅 getTelemedPayload SQL:', sqlUnified.replace(/\s+/g, ' '));
+  const request = pool.request();
+  // ✅ ใส่ date เฉพาะโหมด NEW
+  if (modeType === 'NEW') {
+    request.input('date', sql.Date, date);
+  }
+  const result = await request.query(sqlUnified);
   if (!result?.recordset?.length) return [];
 
   return result.recordset.map(row => {
@@ -77,13 +104,26 @@ export const getTelemedPayload = async (date) => {
       lng: row.lng ?? ''
     };
 
+    let vn_final = row.vn;
+    if(modeType === 'N' || modeType === 'NEW') { //Edit แก้ไขในทุุกกรณ๊
+      vn_final == vn_final;    
+    }else if(modeType === 'E' || modeType === 'EDIT' ) { //Edit แก้ไขในทุุกกรณ๊
+      vn_final = row.vn_press;
+    }else if(modeType === 'U' || modeType === 'UPDATE') { //Update  ปรับปรุงเฉพาะ VN ที่ห้องบัตรGenให้หลังAPI ส่งการนัดหมายแล้ว
+      vn_final = row.vn_press;    
+    }else if(modeType === 'C' || modeType === 'CANCEL') { //Cancel ยกเลิกการนัดหมาย
+      vn_final = row.vn_press;
+    }else{
+      vn_final = vn_final;
+    }
+
     return {
       appointmentno: row.appointmentno,
       procedurecode: row.procedurecode,
       confirmstatustype: row.confirmstatustype,
       transactionid: row.transaction_id,
       hn: row.hn,
-      vn: row.vn ,            
+      vn: vn_final ,            
       patient_cid: row.patient_cid,
       account_title: normalizeAccountTitle(row.account_title),
       first_name: row.first_name,
@@ -114,11 +154,12 @@ export const getTelemedPayload = async (date) => {
 
 export function extractFirstPhoneNumber(phone) {
   if (typeof phone !== 'string') return '';
-  // แยกเบอร์ด้วย comma หรือช่องว่าง
-  const parts = phone.split(/[, ]+/);
-  // เอาเบอร์แรก แล้วกรองเฉพาะตัวเลข
-  const first = parts[0] || '';
-  return first.replace(/\D/g, '');
+  // ✅ แยกเบอร์ด้วย comma ก่อน (กรณีมีหลายเบอร์)
+  const parts = phone.split(',');
+  const firstPart = parts[0] || '';
+  // ✅ ลบทุกตัวที่ไม่ใช่ตัวเลขออก เช่น ช่องว่าง, ขีดกลาง, ตัวอักษร
+  const digitsOnly = firstPart.replace(/\D/g, '');
+  return digitsOnly;
 }
 
 export function normalizeAccountTitle(pname) {

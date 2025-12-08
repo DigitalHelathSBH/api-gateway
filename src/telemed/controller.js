@@ -18,7 +18,7 @@ export async function handlePatientsRequest(request, reply) {
   const { date } = body;
   console.log('Patients Request Body:', body);
   try {
-    const payloadFull = await getTelemedPayload(date);
+    const payloadFull = await getTelemedPayload("NEW",date);
 
     if (!Array.isArray(payloadFull) || payloadFull.length === 0) {
       reply.status(404).send({ ...response, status_code: '404', statusDesc: 'Not Found Data' });
