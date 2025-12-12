@@ -1,17 +1,19 @@
+/* ตัวหลักของการใช้งานจริง แบบไม่ผ่านKong */
 const mainUrlCorTex = 'https://telepharma.one.th/management/api'; //Direct for Real
 const hospitalKey = 'KOVIE5I-YC5EJ5A-ROBJKQI-CMAFA4A'; //REal
+/* ตัวหลักของการใช้ทดสอบ แบบไม่ผ่านKong */
 //const mainUrlCorTex = 'https://uat-hpd-vhv.one.th/management/api'; //Direct for Test
-//const hospitalKey = 'G3UGXCQ-UGJEWII-UYJPKEA-2543UUI';
+//const hospitalKey = 'G3UGXCQ-UGJEWII-UYJPKEA-2543UUI'; //Test
 
-//const mainUrlCorTex = 'http://10.0.1.154'; // Kong Gateway IP
+/* Kong */
+//const mainUrlCorTex = 'http://10.0.1.154'; // Kong Gateway IPhttp://10.0.120.18:8002/routes
 //const UrlCorTex = mainUrlCorTex + '/telemed/create/';
 //const mainUrlCorTex = 'http://10.0.120.18:8000'; // Kong Gateway IP
 //const UrlCorTex = mainUrlCorTex + '/telemed/create/';
-const jwtToken = '32860055b6dd1b5c0c7d99302a29136e';
+//const jwtToken = '32860055b6dd1b5c0c7d99302a29136e'; ยังไม่ใช้ JWT
 
 export const sendToOutForNew = async (payload) => {
   const UrlCorTex = mainUrlCorTex + '/telemed-center/register-appointment'; //Direct
-  //const UrlCorTex = mainUrlCorTex + '/telemed/create/'; ---Kong Gateway
   console.log("\n📦 เริ่มการส่งไป N Point : สร้าการนัดใหม่");
   console.log('TelemedUrlCorTex:', UrlCorTex);
   console.log('🔐 hospitalkey:', hospitalKey);
@@ -27,70 +29,6 @@ export const sendToOutForNew = async (payload) => {
         hospitalkey: hospitalKey,
         //Authorization: `Bearer ${jwtToken}`, // ถ้ามี JWT
         JF: 'gh#v@fo1'
-      },
-      body: JSON.stringify(payload)
-    });
-
-    const json = await res.json(); // ✅ parse JSON ตรง ๆ
-    //console.log('📨 HTTP Status:', res.status);
-    //console.log('📨📨📨📨📨📨📨📨📨📨📨📨📨📨 Response JSON:', JSON.stringify(json, null, 2));
-
-    const statusCode = String(json.status_code || json.statusCode || res.status);
-
-    if (statusCode === '200' || statusCode === '201') {
-      return {
-        status_code: statusCode,
-        statusDesc: json.message || 'Success',
-        Payload: json
-      };
-    }
-
-    if (statusCode === '403') {
-      return {
-        status_code: '403',
-        statusDesc: `Forbidden: ${json.message || 'Forbidden'}`,
-        Payload: json
-      };
-    }
-
-    if (statusCode === '402') {
-      return {
-        status_code: '402',
-        statusDesc: `Invalid hospitalkey or failed to send data`,
-        Payload: json
-      };
-    }
-
-    return {
-      status_code: statusCode,
-      statusDesc: 'Response received but unrecognized status',
-      Payload: json
-    };
-  } catch (err) {
-    console.error('❌ Fetch error:', err.message);
-    return {
-      status_code: '500',
-      statusDesc: 'Network or unexpected error',
-      Payload: {}
-    };
-  }
-};
-
-export const sendToOutForNew_bk = async (payload) => {
-  const UrlCorTex = mainUrlCorTex + '/telemed-center/register-appointment'; //Direct
-
-  //console.log("\n📦 เริ่มการส่งไป N Point : สร้าการนัดใหม่");
-  //console.log('TelemedUrlCorTex:', UrlCorTex);
-  //console.log('🔐 hospitalkey:', hospitalKey);
-  //console.log('📦 Payload:', JSON.stringify(payload, null, 2));
-
-  try {
-    const res = await fetch(UrlCorTex, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        hospitalkey: hospitalKey        
       },
       body: JSON.stringify(payload)
     });
@@ -294,7 +232,7 @@ export const getTelemedPayloadStatusData = async (appointment_date, transaction_
   }
   UrlCorTex += `?${queryParams.toString()}`;
 
-  console.log("\n📦 เริ่มการดึงข้อมูล สถานะ Telemed Conference เพื่อมาอัปเดต [external.js.getTelemedPayloadStatusData()]");
+  console.log("\n📦 เริ่มการดึงข้อมูล สถานะ Telemed Conference จาก EndPoint เพื่อมาอัปเดต [external.js.getTelemedPayloadStatusData()]");
   console.log('TelemedUrlCorTex:', UrlCorTex);
   console.log('🔐 hospitalkey:', hospitalKey);
 
@@ -366,44 +304,6 @@ export const getTelemedPayloadStatusData = async (appointment_date, transaction_
       statusDesc: 'Network or unexpected error',
       Payload: {}
     };
-  }
-};
-
-/* getTokenPrepare ยังไม่ได้ใช้ในโปรเจคนี้นะ */
-export const getTokenPrepare = async (caseGet) => {
-  /* ยังไม่ได้ใช้เพราะ ระบบFixไปเลยได้ */
-  const caseGetFinal = '1';
-
-  if (caseGetFinal === '1') {
-    const UrlAuth = 'https://id-cortex.srbrhospital.com/realms/cortex/protocol/openid-connect/token';
-    const Client_id = 'vital-sign-saintmed';
-    const client_secret = 'G3UGXCQ-UGJEWII-UYJPKEA-2543UUI';
-
-    const formBody = new URLSearchParams({
-      client_id: HLabClient_id,
-      client_secret: HLabclient_secret,
-      grant_type: 'client_credentials'
-    });
-
-    try {
-      const res = await fetch(UrlAuth, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: formBody.toString()
-      });
-
-      const tokenData = await res.json();
-      if (!res.ok || !tokenData?.access_token || !tokenData?.token_type) {
-        throw new Error(tokenData.error_description || 'Token fetch failed');
-      }
-
-      return tokenData;
-    } catch (err) {
-      console.error('❌ Token fetch error:', err.message);
-      throw err;
-    }
-  } else {
-    return { token: 'tesssssstTOKENexl1234645646466646466' };
   }
 };
 

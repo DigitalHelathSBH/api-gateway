@@ -11,9 +11,10 @@ export const getTelemedPayload = async (modeType,date) => {
     sql_SubWhere = sql_SubWhere;    
   }else if(modeType === 'E' || modeType === 'EDIT' ) { //Edit แก้ไขในทุุกกรณ๊ ยังไม่เอาไปใช้
     sql_SubWhere = " ";
-  }else if(modeType === 'U' || modeType === 'UPDATE') { //Update  ปรับปรุงเฉพาะ VN ที่ห้องบัตรGenให้หลังจากAPI ส่งการนัดหมายแล้ว ระบบจะมองหาข้อมูลที่มี transaction_id แล้วเท่านั้น 3วันก่อนวันนัดหมาย
-    sql_SubWhere = " AND CONVERT(date, DATEADD(DAY, +3, GETDATE())) = CONVERT(date, HNAPPMNT.APPOINTMENTDATETIME) AND (HNAPPMNT.transaction_id is not null )";
-  }else if(modeType === 'C' || modeType === 'CANCEL') { //Cancel ยกเลิกการนัดหมาย ตอนนี้ยังไม่เอาไปใช้
+  }else if(modeType === 'U' || modeType === 'UPDATE') { //Update  ปรับปรุงเฉพาะ VN ที่ห้องบัตรGenให้หลังจากAPI ส่งการนัดหมายแล้ว ระบบจะมองหาข้อมูลที่มี transaction_id แล้วเท่านั้น 3วันก่อนวันนัดหมาย(เพื่อลดภาระการส่งข้อมูล) 
+    //+4วันเพราะระบบเราสั่งประมวลผลทุภหลังเทียงคืนของวันนัดหมาย ก่อนวันนัดหมายจริง 3 วัน เราก็ต้องย้อนกลับไปอีก 1 วัน เลยต้องเป็น 4 วัน
+    sql_SubWhere = " AND CONVERT(date, DATEADD(DAY, +4, GETDATE())) = CONVERT(date, HNAPPMNT.APPOINTMENTDATETIME) AND (HNAPPMNT.transaction_id is not null ) AND HNAPPMNT.TelemedStatus not in('C','Y') ";
+  }else if(modeType === 'C' || modeType === 'CANCEL') { //Cancel ยกเลิกการนัดหมาย ตอนนี้ยังไม่เอาไปใช้ ตอนนี้ใการ UPdate สถานะเป็น C แทน
     sql_SubWhere = ` AND HNAPPMNT.transaction_id = '?' `; //ยังไม่เอาไปใช้
   }else{
     sql_SubWhere = sql_SubWhere;
@@ -33,7 +34,12 @@ export const getTelemedPayload = async (modeType,date) => {
       'แพทย์' AS [doctor_title],
       SSBDatabase.dbo.GetSSBName(PYREXT.FIRSTTHAINAME) AS [doctor_firstname],
       SSBDatabase.dbo.GetSSBName(PYREXT.LASTTHAINAME) AS [doctor_lastname],
-      patientinfo.pname AS [account_title],
+      CASE 
+        WHEN patientinfo.pname = 'น.ส.' THEN 'นางสาว' 
+        WHEN patientinfo.pname = 'น.ช.' THEN 'นาย' 
+        WHEN patientinfo.pname = 'น.ญ.' THEN 'นางสาว' 
+        ELSE patientinfo.pname  
+      END AS [account_title],
       patientinfo.fname AS [first_name],
       patientinfo.lname AS [last_name],
       FORMAT(PATIENT_INFO.Birthdatetime, 'yyyy-MM-dd') AS [birth_date],
@@ -60,6 +66,7 @@ export const getTelemedPayload = async (modeType,date) => {
       'patient' AS [require_type],
       '' AS [sub_hospital_name],
       '' AS [sub_hospital_code]
+      
     FROM SSBDatabase.dbo.HNAPPMNT
       INNER JOIN SSBDatabase.dbo.PATIENT_INFO ON PATIENT_INFO.HN = HNAPPMNT.HN
       INNER JOIN SSBDatabase.dbo.patientinfo ON patientinfo.HN = HNAPPMNT.HN
@@ -69,9 +76,11 @@ export const getTelemedPayload = async (modeType,date) => {
       LEFT JOIN SSBDatabase.dbo.VNPRES ON VNPRES.APPOINTMENTNO = HNAPPMNT.APPOINTMENTNO
     WHERE
         HNAPPMNT.PROCEDURECODE='T'   
-      ${sql_SubWhere}     
+      ${sql_SubWhere}  -- ใช้จริง
+      
   `;
   /*
+    --AND CONVERT(date, HNAPPMNT.MAKEDATETIME) = CONVERT(date, '2025-12-11' ) AND (HNAPPMNT.transaction_id is null OR HNAPPMNT.transaction_id = '') --Mock
     --AND (HNAPPMNT.transaction_id is null OR HNAPPMNT.transaction_id = '') 
     --AND (HNAPPMNT.TelemedStatus is null OR HNAPPMNT.TelemedStatus = '') AND (HNAPPMNT.transaction_id is null OR HNAPPMNT.transaction_id = '')
     --AND CONVERT(date, HNAPPMNT.MAKEDATETIME) = CONVERT(date, @date)

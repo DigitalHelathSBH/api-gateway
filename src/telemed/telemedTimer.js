@@ -1,4 +1,4 @@
-import { getTokenPrepare, sendToOutForNew, sendToOutForEdit, sendToOutForCancel , stripHtmlTags } from './external.js';
+import { sendToOutForNew, sendToOutForEdit, sendToOutForCancel , stripHtmlTags } from './external.js';
 import { getTelemedPayload } from './services.js';
 import { logTelemedTransaction ,runTelemedSyncGetStatus} from './updater.js';
 import { getPool } from '../common/db.js';
@@ -19,7 +19,7 @@ export async function startTelemedLoopData() {
     let payloadFull = await getTelemedPayload("NEW", lastDate);
   
     if (!Array.isArray(payloadFull) || payloadFull.length === 0) {
-      console.log('📭 No new data to send, ไม่มีข้อมูลตามเงื่อนไขเพื่อส่ง(Create:สร้างรายการนัดใหม่)');
+      console.log('📭⚠️⚠️⚠️ No new data to send, ไม่มีข้อมูลตามเงื่อนไขเพื่อส่ง(Create:สร้างรายการนัดใหม่) ⚠️⚠️⚠️');
       return;
     }
 
@@ -47,13 +47,14 @@ export async function startTelemedLoopData() {
             console.log(`✅ Sent OK [${statusCode}] at ${timestamp}`);
             successCount++;
           } else {
-            console.warn(`⚠️ Send failed(New) [${statusCode}] - ${outResponse1.statusDesc}`);
+            console.warn(`⚠️ Send failed(New) [${statusCode}] - ${outResponse1.statusDesc} \n `+ JSON.stringify(outResponse1, null, 2));
             failCount++;
             failLogs.push({
               case: "New",
               hn: payload.hn,
               appointment_date: payload.appointment_date,
-              transaction_id: payload.transaction_id
+              transaction_id: payload.transaction_id,
+              problemdesc: stripHtmlTags(outResponse1.statusDesc)
             });
           }
           try { await logTelemedTransaction(payload, outResponse1); } catch (err) {}
@@ -70,13 +71,14 @@ export async function startTelemedLoopData() {
             console.log(`✅ Sent OK [${statusCode2}] at ${timestamp}`);
             successCount++;
           } else {
-            console.warn(`⚠️ Send failed(Cancel) [${statusCode2}] - ${outResponse2.statusDesc}`);
+            console.warn(`⚠️ Send failed(Cancel) [${statusCode2}] - ${outResponse2.statusDesc}`+ JSON.stringify(outResponse2, null, 2));
             failCount++;
             failLogs.push({
               case: "Cancel",
               hn: payload.hn,
               appointment_date: payload.appointment_date,
-              transaction_id: payload.transaction_id
+              transaction_id: payload.transaction_id,
+              problemdesc: stripHtmlTags(outResponse2.statusDesc)
             });
           }
           try { await logTelemedTransaction(payload, outResponse2); } catch (err) {}
@@ -93,13 +95,14 @@ export async function startTelemedLoopData() {
             console.log(`✅ Sent OK [${statusCode3}] at ${timestamp}`);
             successCount++;
           } else {
-            console.warn(`⚠️ Send failed(Edit) [${statusCode3}] - ${outResponse3.statusDesc}`);
+            console.warn(`⚠️ Send failed(Edit) [${statusCode3}] - ${outResponse3.statusDesc}`+ JSON.stringify(outResponse3, null, 2));
             failCount++;
             failLogs.push({
               case: "Edit",
               hn: payload.hn,
               appointment_date: payload.appointment_date,
-              transaction_id: payload.transaction_id
+              transaction_id: payload.transaction_id,
+              problemdesc: stripHtmlTags(outResponse3.statusDesc)
             });
           }
           try { await logTelemedTransaction(payload, outResponse3); } catch (err) {}
@@ -152,7 +155,7 @@ export async function startTelemedUpdateVNPressLoopData() {
     let payloadFull = await getTelemedPayload("UPDATE", lastDate); //ส่งวันที่ไป แต่ไม่ได้ใช้ใน SQL เพราะใช้เงื่อนไขวันที่นัดหมายแทน
   
     if (!Array.isArray(payloadFull) || payloadFull.length === 0) {
-      console.log('📭 No new vn press data to send, ไม่มีข้อมูลตามเงื่อนไขเพื่อส่ง()(Update:อัพเดท VN Press)');
+      console.log('📭⚠️⚠️⚠️ No new vn press data to send, ไม่มีข้อมูลตามเงื่อนไขเพื่อส่ง()(Update:อัพเดท VN Press) ⚠️⚠️⚠️');
       return;
     }
 
@@ -228,12 +231,13 @@ export function startTelemedTimer() {
   }, delay);
 }
 
+/* รอบจับเวลาสำหรับไว้รองรับการทดสอบ เพราะหากว่าจะรอว่าทุกเทียงคืนถึงทำมันจะไม่ได้ทดสอบกันละคราวนี้ */
 export function startTelemedTimer_interval() {
   setInterval(async () => {
     await startTelemedLoopData();  // ✅ เรียกฟังก์ชันหลัก
     await startTelemedUpdateVNPressLoopData();  // ✅ เรียกฟังก์ชัน VN Press หลัก เพื่ออัพเดทสถานะ VN Press
     await runTelemedSyncGetStatus(getPool);  // ✅ เรียกฟังก์ชันซิงค์ข้อมูล Telemed
-  }, .1000 * 60 * 1000); // 10 * 60 * 1000) = ทุก 10 นาที
+  }, 1000 * 60 * 1000); // 10 * 60 * 1000) = ทุก 10 นาที
 }
 
 export function getYesterdayBangkokDateString() {
@@ -278,43 +282,4 @@ export function getYesterdayBangkokDateTime() {
   const dd = String(bangkok.getDate()).padStart(2, '0');
 
   return `${yyyy}-${mm}-${dd} 00:00:00`;
-}
- 
-export function jsonMockdata() {
-  const jsonString =  `
-  {
-  "hn": "4817150",
-  "vn": "",
-  "appointmentno": "6811-30962",
-  "patient_cid": "3199900192358",
-  "doctor_cid": "1101700100081",
-  "doctor_title": "แพทย์",
-  "doctor_firstname": "ทัศน์วรรณ",
-  "doctor_lastname": "สุริยะณรงค์ชัย",
-  "account_title": "นาย",
-  "first_name": "สมบูรณ์",
-  "last_name": "กลางอรัญ",
-  "birth_date": "1954-02-28",
-  "phone_number": "0941416696",
-  "phone_number_other": "",
-  "appointment_date": "2025-12-08",
-  "appointment_type_name": "Telemedicine",
-  "hospital_code": "10661",
-  "hospital_department_name": "อายุรกรรม ONCO (Telemed).",
-  "hospital_name": "โรงพยาบาลสระบุรี",
-  "hospital_room_name": "Telemedicine",
-  "time_start": "09:00",
-  "time_end": "10:00",
-  "require_type": "patient",
-  "address_detail": {
-    "province": "สระบุรี",
-    "district": "เมืองสระบุรี",
-    "sub_district": "หนองโน",
-    "road": "",
-    "house_no": "111/2",
-    "zip_code": "18000"
-  }
-}
-    `;
-  return JSON.parse(jsonString);  
 }

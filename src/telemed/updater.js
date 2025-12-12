@@ -18,7 +18,7 @@ export async function logTelemedTransaction(payload, response) {
   if (!txid) {
     
     //txid = payload.appointmentno; //"BLOCK01" + getBangkokDateTimeCompact();
-    console.warn('⚠️ ไม่มี transaction_id ใน response');
+    console.warn('🔴🔴🔴🔴🔴 ไม่มี transaction_id ใน response 🔴🔴🔴🔴🔴 \ปัญาหานี้ส่วนใหญ่เกิดจากส่งค่าไปไม่ถูกรูปแบบตามที่ EndPoint ต้องการ? โปรตรวสอบ');
     //return;
   }
 
@@ -108,7 +108,7 @@ export async function updateTelemedCreateStatusPerRow(payloadResponse) {
       }
 
     }else{
-      console.warn(`⚠️ ไม่มี transaction_id ใน response : appointmentno = ${appointmentno}`);
+      console.warn(`🔴🔴🔴🔴🔴 ไม่มี transaction_id ใน response : appointmentno = ${appointmentno} 🔴🔴🔴🔴🔴 \ปัญาหานี้ส่วนใหญ่เกิดจากส่งค่าไปไม่ถูกรูปแบบตามที่ EndPoint ต้องการ? โปรตรวสอบ`);
     }
 
   }
@@ -118,7 +118,7 @@ export async function updateTelemedCreateStatusPerRow(payloadResponse) {
 export async function runTelemedSyncGetStatus(getPool) {
   /* ดึงข้อมูลจากApp telemed มาเพื่อปรับปรุงสถานะใน DB ที่ HNAPPMNT.TelemedStatus S:ส่งข้อมูลแล้ว ,C:ยกเลิก ,Y:ยืนยัน */
   const date2 = new Date();
-  date2.setDate(date2.getDate() - 1);
+  date2.setDate(date2.getDate() - 1); // ดึงข้อมูลของเมื่อวาน
   const lastDate =
       date2.getFullYear() +
       '-' +
@@ -136,7 +136,7 @@ export async function runTelemedSyncGetStatus(getPool) {
 
   const dataList = apiResponse.Payload?.data || [];
   if (!Array.isArray(dataList) || dataList.length === 0) {
-    console.log('📭 No telemed data to update : [external.js.runTelemedSyncGetStatus()]');
+    console.log('📭🔴🔴 No telemed data to update : [external.js.runTelemedSyncGetStatus()] 🔴🔴');
     return;
   }
 
@@ -149,7 +149,7 @@ export async function runTelemedSyncGetStatus(getPool) {
     const pool = await getPool();
     if (txid) {
       try {
-        console.log(`\n📦 Updating TXID=${txid} to TelemedStatus='${telemedStatus}' [external.js.runTelemedSyncGetStatus()]`);   
+        //console.log(`\n📦 Updating TXID=${txid} to TelemedStatus='${telemedStatus}' [external.js.runTelemedSyncGetStatus()]`);   
         await updateTelemedGetStatus(pool, txid, telemedStatus);
         successCount++;
       } catch {
@@ -180,7 +180,7 @@ export function confirmstatusCovertToTelemedStatus(appStatus) {
 // ฟังก์ชันอัปเดต TelemedStatus = 'U'
 export async function updateTelemedGetStatus(pool, transaction_id, telemedStatus) {
   const sqlshow = `UPDATE SSBDatabase.dbo.HNAPPMNT SET TelemedStatus = '${telemedStatus}' WHERE transaction_id = '${transaction_id}'`;
-  console.log(`\n 📦📦📦📦📦📦📦📦📦📦📦 updater.js.updateTelemedGetStatus() Log SQL : ${sqlshow} \n`);
+  //console.log(`\n 📦📦📦📦📦 updater.js.updateTelemedGetStatus() Log SQL : ${sqlshow} \n`);
   try {
     await pool.request()
       .input('transactionid', sql.NVarChar, transaction_id)
@@ -190,7 +190,7 @@ export async function updateTelemedGetStatus(pool, transaction_id, telemedStatus
 
     console.log(`✅ Updated TelemedStatus=${telemedStatus} for TXID=${transaction_id} [updater.js.updateTelemedGetStatus()]`);
   } catch (err) {
-    console.error(`❌ Failed to update TXID=${transaction_id} → ${err.message} [updater.js.updateTelemedGetStatus()]`);
+    console.error(`❌ Failed to update TXID=${transaction_id} → ${err.message} [updater.js.updateTelemedGetStatus()] \n[${sqlshow}]`);
   }
 }
 
