@@ -1,6 +1,6 @@
 import { getPool } from '../common/db.js';
 import sql from 'mssql';
-
+ 
 export const getTelemedPayload = async (modeType,date) => {
   const pool = await getPool();
   modeType = modeType.toUpperCase();

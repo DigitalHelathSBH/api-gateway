@@ -4,7 +4,7 @@ const hospitalKey = 'KOVIE5I-YC5EJ5A-ROBJKQI-CMAFA4A'; //REal
 /* ตัวหลักของการใช้ทดสอบ แบบไม่ผ่านKong */
 //const mainUrlCorTex = 'https://uat-hpd-vhv.one.th/management/api'; //Direct for Test
 //const hospitalKey = 'G3UGXCQ-UGJEWII-UYJPKEA-2543UUI'; //Test
-
+ 
 /* Kong */
 //const mainUrlCorTex = 'http://10.0.1.154'; // Kong Gateway IPhttp://10.0.120.18:8002/routes
 //const UrlCorTex = mainUrlCorTex + '/telemed/create/';

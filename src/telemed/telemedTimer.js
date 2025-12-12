@@ -2,7 +2,7 @@ import { sendToOutForNew, sendToOutForEdit, sendToOutForCancel , stripHtmlTags }
 import { getTelemedPayload } from './services.js';
 import { logTelemedTransaction ,runTelemedSyncGetStatus} from './updater.js';
 import { getPool } from '../common/db.js';
-
+ 
 export async function startTelemedLoopData() {
   const timestamp = new Date().toISOString();
   console.log(`\n⏱ Start Telemed timer triggered at ${timestamp}\n`);

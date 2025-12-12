@@ -6,7 +6,7 @@ function validateRequestKeys(body, allowedKeys) {
   const invalidKeys = Object.keys(body).filter(k => !allowedKeys.includes(k));
   return invalidKeys;
 }
-
+ 
 export async function handlePatientsRequest(request, reply) {
   const response = {
     status_code: '200',

@@ -1,4 +1,4 @@
-export const patientsRequestHnSchema = {
+export const patientsRequestHnSchema = { 
   body: {
     type: 'object',
     required: ['date'],
