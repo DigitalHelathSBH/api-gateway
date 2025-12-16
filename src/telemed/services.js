@@ -80,7 +80,7 @@ export const getTelemedPayload = async (modeType,date) => {
       
   `;
   /*
-    --AND CONVERT(date, HNAPPMNT.MAKEDATETIME) = CONVERT(date, '2025-12-11' ) AND (HNAPPMNT.transaction_id is null OR HNAPPMNT.transaction_id = '') --Mock
+    --AND CONVERT(date, HNAPPMNT.MAKEDATETIME) = CONVERT(date, '2025-12-15' ) AND (HNAPPMNT.transaction_id is null OR HNAPPMNT.transaction_id = '') --Mock
     --AND (HNAPPMNT.transaction_id is null OR HNAPPMNT.transaction_id = '') 
     --AND (HNAPPMNT.TelemedStatus is null OR HNAPPMNT.TelemedStatus = '') AND (HNAPPMNT.transaction_id is null OR HNAPPMNT.transaction_id = '')
     --AND CONVERT(date, HNAPPMNT.MAKEDATETIME) = CONVERT(date, @date)
@@ -101,13 +101,13 @@ export const getTelemedPayload = async (modeType,date) => {
 
   return result.recordset.map(row => {
     const address = {
-      province: row.province ?? null,   //MOCK
+      province: row.province ?? null,   
       district: row.district ?? null,
       sub_district: row.sub_district ?? null,
       road: row.road ?? '',
       moo: row.moo ?? '',
       house_no: row.house_no ?? '',
-      zip_code: row.zip_code ?? '', //MOCK
+      zip_code: row.zip_code ?? '', 
       landmark: row.landmark ?? '',
       lat: row.lat ?? '',
       lng: row.lng ?? ''
@@ -143,7 +143,7 @@ export const getTelemedPayload = async (modeType,date) => {
       doctor_lastname: row.doctor_lastname,      
       birth_date: row.birth_date,
       phone_number: extractFirstPhoneNumber(row.phone_number),
-      phone_number_other: '',      
+      phone_number_other: extractSecondPhoneNumber(row.phone_number),      
       appointment_date: row.appointment_date,
       appointment_type_name: row.appointment_type_name,
       hospital_code: row.hospital_code,
@@ -163,11 +163,23 @@ export const getTelemedPayload = async (modeType,date) => {
 
 export function extractFirstPhoneNumber(phone) {
   if (typeof phone !== 'string') return '';
-  // ✅ แยกเบอร์ด้วย comma ก่อน (กรณีมีหลายเบอร์)
-  const parts = phone.split(',');
-  const firstPart = parts[0] || '';
-  // ✅ ลบทุกตัวที่ไม่ใช่ตัวเลขออก เช่น ช่องว่าง, ขีดกลาง, ตัวอักษร
+  // ✅ แยกเบอร์ด้วยตัวแบ่งที่พบบ่อย เช่น comma, slash, backslash, pipe, semicolon
+  const parts = phone.split(/[,/\\|;]+/);
+  let firstPart = parts[0] || '';
+  // ✅ ลบทุกตัวที่ไม่ใช่ตัวเลขออก เช่น ช่องว่าง, ขีดกลาง, วงเล็บ, ตัวอักษร
   const digitsOnly = firstPart.replace(/\D/g, '');
+  return digitsOnly;
+}
+
+export function extractSecondPhoneNumber(phone) {
+  if (typeof phone !== 'string') return '';
+  
+  // ✅ แยกเบอร์ด้วยตัวแบ่งที่พบบ่อย เช่น comma, slash, backslash, pipe, semicolon
+  const parts = phone.split(/[,/\\|;]+/);
+  let secondPart = parts[1] || ''; // เลือกเบอร์ลำดับที่ 2 ถ้ามี
+  
+  // ✅ ลบทุกตัวที่ไม่ใช่ตัวเลขออก เช่น ช่องว่าง, ขีดกลาง, วงเล็บ, ตัวอักษร
+  const digitsOnly = secondPart.replace(/\D/g, '');
   return digitsOnly;
 }
 
