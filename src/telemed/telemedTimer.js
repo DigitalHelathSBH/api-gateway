@@ -1,6 +1,6 @@
 import { sendToOutForNew, sendToOutForEdit, sendToOutForCancel , stripHtmlTags } from './external.js';
 import { getTelemedPayload } from './services.js';
-import { logTelemedTransaction ,runTelemedSyncGetStatus} from './updater.js';
+import { logTelemedTransaction , syncTelemedStatusFromPayload} from './updater.js';
 import { getPool } from '../common/db.js';
  
 export async function startTelemedLoopData() {
@@ -226,7 +226,7 @@ export function startTelemedTimer() {
   setTimeout(async () => {
     await startTelemedLoopData();  // ✅ เรียกฟังก์ชันหลัก
     await startTelemedUpdateVNPressLoopData();  // ✅ เรียกฟังก์ชัน VN Press หลัก เพื่ออัพเดทสถานะ VN Press
-    await runTelemedSyncGetStatus(getPool);  // ✅ เรียกฟังก์ชันซิงค์ข้อมูล Telemed
+    syncTelemedStatusFromPayload(); // ✅ เรียกฟังก์ชันซิงค์สถานะจาก Telemed โดย payload
     startTelemedTimer();       // ✅ ตั้งรอบถัดไป
   }, delay);
 }
@@ -236,7 +236,7 @@ export function startTelemedTimer_interval() {
   setInterval(async () => {
     await startTelemedLoopData();  // ✅ เรียกฟังก์ชันหลัก
     await startTelemedUpdateVNPressLoopData();  // ✅ เรียกฟังก์ชัน VN Press หลัก เพื่ออัพเดทสถานะ VN Press
-    await runTelemedSyncGetStatus(getPool);  // ✅ เรียกฟังก์ชันซิงค์ข้อมูล Telemed
+    await syncTelemedStatusFromPayload(); // ✅ เรียกฟังก์ชันซิงค์สถานะจาก Telemed โดย payload
   }, 1000 * 60 * 1000); // 10 * 60 * 1000) = ทุก 10 นาที
 }
 
