@@ -10,7 +10,7 @@ export const getTelemedPayload = async (modeType,date) => {
   let sql_sortBy = ` ORDER BY HNAPPMNT.MAKEDATETIME ASC `;                    
   if(modeType === 'N' || modeType === 'NEW') { //NEW สร้างเอกสารเพื่อส่งไปTelemed ใหม่
     sql_SubWhere = sql_SubWhere;    
-  }else if(modeType === 'E' || modeType === 'EDIT' ) { //Edit แก้ไขในทุุกกรณ๊ ยังไม่เอาไปใช้
+  }else if(modeType === 'E' || modeType === 'EDIT' ) { //Edit แก้ไขในทุุกกรณ๊ ยังไม่เอาไปใช้ ยังไม่มี Case นะตอนนี้สร้างเผื่อไว้
     sql_SubWhere = " ";
   }else if(modeType === 'U' || modeType === 'UPDATE') { //Update  ปรับปรุงเฉพาะ VN ที่ห้องบัตรGenให้หลังจากAPI ส่งการนัดหมายแล้ว ระบบจะมองหาข้อมูลที่มี transaction_id แล้วเท่านั้น 3วันก่อนวันนัดหมาย(เพื่อลดภาระการส่งข้อมูล) 
     //+4วันเพราะระบบเราสั่งประมวลผลทุภหลังเทียงคืนของวันนัดหมาย ก่อนวันนัดหมายจริง 3 วัน เราก็ต้องย้อนกลับไปอีก 1 วัน เลยต้องเป็น 4 วัน
@@ -19,9 +19,10 @@ export const getTelemedPayload = async (modeType,date) => {
                      AND (HNAPPMNT.transaction_id is not null ) AND HNAPPMNT.TelemedStatus not in('C','Y') `;
   }else if(modeType === 'C' || modeType === 'CANCEL') { //Cancel ยกเลิกการนัดหมาย ตอนนี้ยังไม่เอาไปใช้ ตอนนี้ใการ UPdate สถานะเป็น C แทน
     sql_SubWhere = ` AND HNAPPMNT.transaction_id = '?' `; //ยังไม่ได้ใช้
-  }else if(modeType === 'S' || modeType === 'STATUS') { //ดึงข้อมูลมาเช็คสถานะการนัดหมายทุกครั้ง (ใช้ในกรณีที่ต้องการเช็คสถานะการนัดหมายที่ส่งไปแล้ว) ดูช่วงวันนัดหมายล่วงหน้า 15 วัน
-    sql_SubWhere = ` AND CONVERT(date, HNAPPMNT.APPOINTMENTDATETIME) BETWEEN CONVERT(date, DATEADD(DAY, -1, GETDATE())) AND CONVERT(date, DATEADD(DAY, 14, GETDATE())) 
+  }else if(modeType === 'S' || modeType === 'STATUS') { //ดึงข้อมูลมาเช็คสถานะการนัดหมายทุกครั้ง (ใช้ในกรณีที่ต้องการเช็คสถานะการนัดหมายที่ส่งไปแล้ว) ดูช่วงวันนัดหมายล่วงหน้า 15 วัน แต่ก่อนใช้3 วันไม่พอ
+    sql_SubWhere = ` AND CONVERT(date, HNAPPMNT.APPOINTMENTDATETIME) BETWEEN CONVERT(date, DATEADD(DAY, -1, GETDATE())) AND CONVERT(date, DATEADD(DAY, 14, GETDATE()))                      
                      AND (HNAPPMNT.transaction_id is not null ) AND HNAPPMNT.TelemedStatus not in('C') AND HNAPPMNT.TelemedStatusACT not in('C','Y') `;
+                     /* --AND CONVERT(date, HNAPPMNT.APPOINTMENTDATETIME) = '2025-12-22' --mock */
   }else{ 
     sql_SubWhere = sql_SubWhere;
   }

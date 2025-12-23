@@ -162,6 +162,7 @@ export async function syncTelemedStatusFromPayload() {
     for (const item of dataList) {
       const txid = item.transaction_id;
       const status = confirmstatusCovertToTelemedStatus(item.confirmation_contact_status);
+      //console.log(`📭📅 item.status_active : ${item.status_active}`);
       const statusAct = confirmstatusCovertToTelemedStatusAct(item.status_active);
       const pool = await getPool();
       if (txid) {
@@ -181,10 +182,12 @@ export async function syncTelemedStatusFromPayload() {
   console.log(`⚠️ อัปเดตล้มเหลว: ${totalFail}`);
 }
 
-/* สถานะยืนยันเพื่อรับใช้บริการ */
+/* สถานะยืนยันเพื่อรับการใช้บริการ ทางผู้ให้บริการTelemed จะโทรไปแจ้งคนไข้ให้ก่อนวัดกำหนดนัด 3 วัน */
 export function confirmstatusCovertToTelemedStatus(appStatus) {
-  /* แปลงค่าจาก confirmstatus ที่ได้จาก Telemed เป็นค่า TelemedStatus ที่จะอัปเดตใน DB */
-  switch (appStatus) {
+  // ✅ กัน null, undefined, non-string
+  if (typeof appStatus !== 'string') return '';
+  const status = appStatus.trim().toLowerCase(); // ✅ ตัดช่องว่าง + แปลงเป็น lowercase
+  switch (status) {
     case 'waiting_confirm':
       return 'S';   // รอยืนยัน
     case 'answered_not_available':
@@ -192,22 +195,24 @@ export function confirmstatusCovertToTelemedStatus(appStatus) {
     case 'answered_available':
       return 'Y';   // รับการทำ telemed → Yes
     default:
-      return '';    // กรณีไม่ตรง mapping → คืนค่าว่าง
+      return '';    // ไม่ตรง mapping
   }
 }
-/* สถาการใช้งานโทรจริงหรือไม่ */
+/* สถานะการใช้งานโทรผ่านTelemedจริงหรือไม่ */
 export function confirmstatusCovertToTelemedStatusAct(appStatus) {
-  switch (appStatus) {
+  if (typeof appStatus !== 'string') return ''; // กัน null, undefined, หรือ non-string
+  const status = appStatus.trim().toLowerCase(); // ✅ ตัดช่องว่าง + แปลงเป็นตัวพิมพ์เล็ก
+  switch (status) {
     case 'pending':
       return 'P';   // กำลังดำเนินการ
     case 'waiting_conference':
       return 'S';   // รอ conference
-    case 'complete ':
+    case 'complete':
       return 'Y';   // เสร็จสิ้น
     case 'cancel':
-      return 'C';   // ยกเลิก      
+      return 'C';   // ยกเลิก
     default:
-      return '';    // กรณีไม่ตรง mapping → คืนค่าว่าง
+      return '';    // ไม่ตรง mapping
   }
 }
 // ฟังก์ชันอัปเดต TelemedStatus = 'U'
